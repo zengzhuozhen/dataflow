@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"time"
 )
 
@@ -12,13 +13,12 @@ const (
 type Trigger interface {
 	OnReady() <-chan struct{}
 	Clone() Trigger
-	Run(windowBase *windowBase)
+	Run(ctx context.Context, windowBase *windowBase)
 }
 
 type countTrigger struct {
-	count      int
-	notifyChan chan struct{}
-	readyChan  chan struct{}
+	count     int
+	readyChan chan struct{}
 }
 
 func (c countTrigger) OnReady() <-chan struct{} {
@@ -27,16 +27,17 @@ func (c countTrigger) OnReady() <-chan struct{} {
 
 func (c countTrigger) Clone() Trigger {
 	return countTrigger{
-		count:      c.count,
-		notifyChan: make(chan struct{}),
-		readyChan:  make(chan struct{}),
+		count:     c.count,
+		readyChan: make(chan struct{}),
 	}
 }
 
-func (c countTrigger) Run(windowBase *windowBase) {
+func (c countTrigger) Run(ctx context.Context, windowBase *windowBase) {
 	for {
 		select {
-		// todo cancel
+		case <-ctx.Done():
+			close(c.readyChan)
+			return
 		default:
 			if len(windowBase.data) >= c.count {
 				c.readyChan <- struct{}{}
@@ -46,7 +47,7 @@ func (c countTrigger) Run(windowBase *windowBase) {
 }
 
 func NewCountTrigger(count int) Trigger {
-	return countTrigger{count: count, notifyChan: make(chan struct{})}
+	return countTrigger{count: count, readyChan: make(chan struct{})}
 }
 
 type TimeTrigger struct {
@@ -67,10 +68,12 @@ func (t TimeTrigger) Clone() Trigger {
 	}
 }
 
-func (t TimeTrigger) Run(windowBase *windowBase) {
+func (t TimeTrigger) Run(ctx context.Context, windowBase *windowBase) {
 	for {
 		select {
-		// todo cancel
+		case <-ctx.Done():
+			close(t.readyChan)
+			return
 		case <-t.tick.C:
 			t.readyChan <- struct{}{}
 		}

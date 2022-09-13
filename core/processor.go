@@ -6,6 +6,7 @@ import (
 
 type Processor struct {
 	ctx      context.Context
+	cancel   context.CancelFunc
 	windows  Windows
 	trigger  Trigger
 	operator Operator
@@ -15,26 +16,35 @@ type Processor struct {
 }
 
 func BuildProcessor() *Processor {
-	return &Processor{ctx: context.Background()}
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Processor{ctx: ctx, cancel: cancel}
 }
 
 func (p *Processor) Start() {
 	go func() {
 		for {
 			select {
+			case <-p.ctx.Done():
+				close(p.input)
+				close(p.output)
+				return
 			case data := <-p.input:
 				windows := p.windows.AssignWindow(data)
 				if len(windows) == 0 {
 					// can't found suitable window, create window and re-assign
 					windows = p.windows.CreateWindow(data, p.trigger, p.operator, p.evictor)
 					for _, window := range windows {
-						window.start(p.output)
+						window.start(p.ctx, p.output)
 					}
 					p.windows.AssignWindow(data)
 				}
 			}
 		}
 	}()
+}
+
+func (p *Processor) Stop() {
+	p.cancel()
 }
 
 func (p *Processor) Window(windows Windows) *Processor {

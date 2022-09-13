@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"sort"
 	"sync"
 	"time"
@@ -15,25 +16,13 @@ const (
 	WindowTypeSessionWindow
 )
 
-var defaultGlobalWindow = GlobalWindow{
-	windowBase: &windowBase{
-		data:      []Datum{},
-		startTime: time.Time{},
-		endTime:   time.Time{},
-		mutex:     new(sync.Mutex),
-	},
-	Once: new(sync.Once),
-}
-
-func NewDefaultGlobalWindow() Windows {
-	return &defaultGlobalWindow
-}
-
 type Windows interface {
 	// AssignWindow determine which window the coming data will drop in and return the window
 	AssignWindow(data Datum) []*windowBase
 	// CreateWindow create a list empty window for saving data,
 	CreateWindow(data Datum, trigger Trigger, operator Operator, evictor Evictor) []*windowBase
+	// GetWindows return windows in processor
+	GetWindows() []*windowBase
 }
 
 type windowBase struct {
@@ -47,12 +36,17 @@ type windowBase struct {
 	closeNotify chan struct{}
 }
 
-func (wb *windowBase) start(output chan Datum) {
-	go wb.trigger.Run(wb)
+func (wb *windowBase) start(ctx context.Context, output chan Datum) {
+	childCtx, cancel := context.WithCancel(ctx)
+	go wb.trigger.Run(childCtx, wb)
 	go func() {
 		for {
 			select {
+			case <-ctx.Done():
+				cancel()
+				return
 			case <-wb.closeNotify:
+				cancel()
 				return
 			case <-wb.trigger.OnReady():
 				wg := sync.WaitGroup{}
@@ -106,6 +100,24 @@ func findStartAndEndTime(eventTime time.Time, size, passPeriod time.Duration) (s
 	return baseTime.Add(passPeriod), baseTime.Add(passPeriod).Add(size)
 }
 
+var defaultGlobalWindow = GlobalWindow{
+	windowBase: &windowBase{
+		data:      []Datum{},
+		startTime: time.Time{},
+		endTime:   time.Time{},
+		mutex:     new(sync.Mutex),
+	},
+	Once: new(sync.Once),
+}
+
+func (gw *GlobalWindow) GetWindows() []*windowBase {
+	return []*windowBase{gw.windowBase}
+}
+
+func NewDefaultGlobalWindow() Windows {
+	return &defaultGlobalWindow
+}
+
 type GlobalWindow struct {
 	*windowBase
 	*sync.Once
@@ -140,6 +152,10 @@ func (gw *GlobalWindow) CreateWindow(data Datum, trigger Trigger, operator Opera
 type FixedWindow struct {
 	windows []*windowBase
 	size    time.Duration
+}
+
+func (fw *FixedWindow) GetWindows() []*windowBase {
+	return fw.windows
 }
 
 func (fw *FixedWindow) AssignWindow(data Datum) []*windowBase {
@@ -181,8 +197,8 @@ type SlideWindow struct {
 	period  time.Duration
 }
 
-func NewSlideWindow(size, period time.Duration) *SlideWindow {
-	return &SlideWindow{size: size, period: period}
+func (sw *SlideWindow) GetWindows() []*windowBase {
+	return sw.windows
 }
 
 func (sw *SlideWindow) AssignWindow(data Datum) []*windowBase {
@@ -221,13 +237,17 @@ func (sw *SlideWindow) CreateWindow(data Datum, trigger Trigger, operator Operat
 	}
 }
 
+func NewSlideWindow(size, period time.Duration) *SlideWindow {
+	return &SlideWindow{size: size, period: period}
+}
+
 type SessionWindow struct {
 	windows []*windowBase
 	gap     time.Duration
 }
 
-func NewSessionWindow(gap time.Duration) Windows {
-	return &SessionWindow{gap: gap}
+func (sw *SessionWindow) GetWindows() []*windowBase {
+	return sw.windows
 }
 
 func (sw *SessionWindow) AssignWindow(data Datum) []*windowBase {
@@ -289,6 +309,10 @@ func (sw *SessionWindow) CreateWindow(data Datum, trigger Trigger, operator Oper
 		return sw.windows[i].startTime.Before(sw.windows[j].startTime)
 	})
 	return []*windowBase{window}
+}
+
+func NewSessionWindow(gap time.Duration) Windows {
+	return &SessionWindow{gap: gap}
 }
 
 func (sw *SessionWindow) mergeWindow(windowIndex1, windowIndex2 int) *windowBase {
