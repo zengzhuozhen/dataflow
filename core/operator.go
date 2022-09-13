@@ -4,12 +4,18 @@ import (
 	"time"
 )
 
+const (
+	OperatorTypeSum = 1
+)
+
 type Operator interface {
 	Operate(datum []Datum) Datum
 	Clone() Operator
 }
 
-type SumOperator struct{}
+type SumOperator struct {
+	ID string
+}
 
 func (s SumOperator) Operate(datum []Datum) Datum {
 	var sum int

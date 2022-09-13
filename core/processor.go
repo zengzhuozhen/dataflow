@@ -2,11 +2,14 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"github.com/google/uuid"
 )
 
 type Processor struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
+	ID       string
 	windows  Windows
 	trigger  Trigger
 	operator Operator
@@ -17,7 +20,7 @@ type Processor struct {
 
 func BuildProcessor() *Processor {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Processor{ctx: ctx, cancel: cancel}
+	return &Processor{ctx: ctx, cancel: cancel, ID: uuid.NewString()}
 }
 
 func (p *Processor) Start() {
@@ -80,4 +83,15 @@ func (p *Processor) Build() (*Processor, chan<- Datum, <-chan Datum) {
 	p.input = make(chan Datum)
 	p.output = make(chan Datum)
 	return p, p.input, p.output
+}
+
+func (p *Processor) PushData(Data Datum) {
+	p.input <- Data
+}
+
+func (p *Processor) PopResult() {
+	for {
+		data := <-p.output
+		fmt.Println(data)
+	}
 }
