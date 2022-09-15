@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	TriggerTypeCountTrigger = 1
-	TriggerTypeTimeTrigger  = 2
+	TriggerTypeCounterTrigger = 1
+	TriggerTypeTimerTrigger   = 2
 )
 
 type Trigger interface {
@@ -16,23 +16,23 @@ type Trigger interface {
 	Run(ctx context.Context, windowBase *windowBase)
 }
 
-type countTrigger struct {
+type counterTrigger struct {
 	count     int
 	readyChan chan struct{}
 }
 
-func (c countTrigger) OnReady() <-chan struct{} {
+func (c counterTrigger) OnReady() <-chan struct{} {
 	return c.readyChan
 }
 
-func (c countTrigger) Clone() Trigger {
-	return countTrigger{
+func (c counterTrigger) Clone() Trigger {
+	return counterTrigger{
 		count:     c.count,
 		readyChan: make(chan struct{}),
 	}
 }
 
-func (c countTrigger) Run(ctx context.Context, windowBase *windowBase) {
+func (c counterTrigger) Run(ctx context.Context, windowBase *windowBase) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -46,8 +46,8 @@ func (c countTrigger) Run(ctx context.Context, windowBase *windowBase) {
 	}
 }
 
-func NewCountTrigger(count int) Trigger {
-	return countTrigger{count: count, readyChan: make(chan struct{})}
+func NewCounterTrigger(count int) Trigger {
+	return counterTrigger{count: count, readyChan: make(chan struct{})}
 }
 
 type TimeTrigger struct {

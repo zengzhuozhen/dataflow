@@ -8,7 +8,7 @@ import (
 func TestBuildProcessor_Classic_Batch(t *testing.T) {
 	processor, input, output := BuildProcessor().
 		Window(NewDefaultGlobalWindow()).
-		Trigger(NewCountTrigger(3)).
+		Trigger(NewCounterTrigger(3)).
 		Operator(SumOperator{}).
 		Evictor(AccumulateEvictor{}).
 		Build()
@@ -26,7 +26,7 @@ func TestBuildProcessor_Classic_Batch(t *testing.T) {
 func TestBuildProcessor_Classic_Batch_Accumulate(t *testing.T) {
 	processor, input, output := BuildProcessor().
 		Window(NewDefaultGlobalWindow()).
-		Trigger(NewCountTrigger(3)).
+		Trigger(NewCounterTrigger(3)).
 		Operator(SumOperator{}).
 		Evictor(AccumulateEvictor{}).
 		Build()
@@ -53,7 +53,7 @@ func TestBuildProcessor_Classic_Batch_Accumulate(t *testing.T) {
 func TestBuildProcessor_Classic_Batch_Recalculate(t *testing.T) {
 	processor, input, output := BuildProcessor().
 		Window(NewDefaultGlobalWindow()).
-		Trigger(NewCountTrigger(3)).
+		Trigger(NewCounterTrigger(3)).
 		Operator(SumOperator{}).
 		Evictor(RecalculateEvictor{}).
 		Build()
@@ -81,7 +81,7 @@ func TestBuildProcessor_Classic_Batch_Recalculate(t *testing.T) {
 func TestBuildProcessor_Fixed_Windows_Batch(t *testing.T) {
 	processor, input, output := BuildProcessor().
 		Window(NewFixedWindows(time.Duration(time.Minute) * 2)).
-		Trigger(NewCountTrigger(2)).
+		Trigger(NewCounterTrigger(2)).
 		Operator(SumOperator{}).
 		Evictor(RecalculateEvictor{}).
 		Build()
@@ -154,7 +154,7 @@ func TestBuildProcessor_Fixed_Windows_Timer_Trigger_Flow(t *testing.T) {
 func TestBuildProcessor_Slide_Windows_Count_Trigger(t *testing.T) {
 	processor, input, output := BuildProcessor().
 		Window(NewSlideWindow(time.Duration(time.Minute)*2, time.Minute)). // 2-minute size window, move on per minute
-		Trigger(NewCountTrigger(1)).
+		Trigger(NewCounterTrigger(1)).
 		Operator(SumOperator{}).
 		Evictor(AccumulateEvictor{}).
 		Build()
@@ -193,7 +193,7 @@ func TestBuildProcessor_Slide_Windows_Timer_Trigger(t *testing.T) {
 func TestBuildProcessor_Session_Windows_Counter_Trigger(t *testing.T) {
 	processor, input, output := BuildProcessor().
 		Window(NewSessionWindow(time.Hour)). // 1-hour session window
-		Trigger(NewCountTrigger(3)).
+		Trigger(NewCounterTrigger(3)).
 		Operator(SumOperator{}).
 		Evictor(AccumulateEvictor{}).
 		Build()
@@ -211,7 +211,7 @@ func TestBuildProcessor_Session_Windows_Counter_Trigger(t *testing.T) {
 func TestBuildProcessor_Session_Windows_Auto_Merge(t *testing.T) {
 	processor, input, output := BuildProcessor().
 		Window(NewSessionWindow(time.Minute * 30)).
-		Trigger(NewCountTrigger(3)).
+		Trigger(NewCounterTrigger(3)).
 		Operator(SumOperator{}).
 		Evictor(AccumulateEvictor{}).
 		Build()

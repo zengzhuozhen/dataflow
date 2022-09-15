@@ -9,6 +9,9 @@ import (
 var subCommands = []*cobra.Command{
 	processorCmd,
 	evictorCmd,
+	operatorCmd,
+	triggerCmd,
+	windowCmd,
 }
 
 var rootCmd = &cobra.Command{

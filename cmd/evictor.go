@@ -10,12 +10,12 @@ var (
 )
 
 var evictorCmd = &cobra.Command{
-	Use:   "evictor [command]",
+	Use:   "evictor",
 	Short: "create a new evcitor or destroy a exists evcitor",
 }
 
 var evictorCreateCmd = &cobra.Command{
-	Use:   "create type(1:AccumulateEvictor,2:RecalculateEvictor)",
+	Use:   "create",
 	Short: "create a new evictor by `type`, it's one of the AccumulateEvictor(1) and RecalculateEvictor(2) for now",
 	Run: func(cmd *cobra.Command, args []string) {
 		evictor, id := service.NewEvictorFactory().CreateEvictor(evictorType)
@@ -24,7 +24,7 @@ var evictorCreateCmd = &cobra.Command{
 }
 
 var evictorDestroyCmd = &cobra.Command{
-	Use:   "destroy evictorID",
+	Use:   "destroy",
 	Short: "destroy a exists evictor",
 	Run: func(cmd *cobra.Command, args []string) {
 		delete(service.GlobalResourcePool.Evictor, evitorID)
@@ -33,8 +33,8 @@ var evictorDestroyCmd = &cobra.Command{
 
 func init() {
 	evictorCreateCmd.Flags().Int32VarP(&evictorType, "type", "t", 0, "evictor type (1:AccumulateEvictor,2:RecalculateEvictor)")
-	evictorCreateCmd.MarkFlagsRequiredTogether("type")
+	_ = evictorCreateCmd.MarkFlagRequired("type")
 	evictorDestroyCmd.Flags().StringVar(&evitorID, "id", "", "evictorID(required)")
-	evictorDestroyCmd.MarkFlagsRequiredTogether("id")
+	_ = evictorDestroyCmd.MarkFlagRequired("id")
 	evictorCmd.AddCommand(evictorCreateCmd, evictorDestroyCmd)
 }

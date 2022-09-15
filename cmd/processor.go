@@ -24,7 +24,7 @@ var processorCmd = &cobra.Command{
 }
 
 var processorCreateCmd = &cobra.Command{
-	Use:   "create {-t trigger | -w window | -e evitor | -id processor}... processor",
+	Use:   "create",
 	Short: "create a new processor",
 	Run: func(cmd *cobra.Command, args []string) {
 		processor := service.NewProcessorFactory().CreateProcessor(windowID, triggerID, evitorID, operatorID)
@@ -33,7 +33,7 @@ var processorCreateCmd = &cobra.Command{
 }
 
 var processorDestroyCmd = &cobra.Command{
-	Use:   "destroy processorID",
+	Use:   "destroy",
 	Short: "destroy a exists processor",
 	Run: func(cmd *cobra.Command, args []string) {
 		processor := service.GlobalResourcePool.Processor[processorID]
@@ -43,7 +43,7 @@ var processorDestroyCmd = &cobra.Command{
 }
 
 var processorPushDataCmd = &cobra.Command{
-	Use:   "push {-p ProcessorID | -k key | -t happenTime| -v value}... ",
+	Use:   "push",
 	Short: "push data to processor",
 	Run: func(cmd *cobra.Command, args []string) {
 		processor := service.GlobalResourcePool.Processor[processorID]
@@ -57,7 +57,7 @@ var processorPushDataCmd = &cobra.Command{
 }
 
 var processorPopResultCmd = &cobra.Command{
-	Use:   "pop {-p ProcessorID}",
+	Use:   "pop",
 	Short: "pop processor result",
 	Run: func(cmd *cobra.Command, args []string) {
 		processor := service.GlobalResourcePool.Processor[processorID]
@@ -73,13 +73,14 @@ func init() {
 	processorCreateCmd.Flags().StringVarP(&operatorID, "operator", "o", "", "operatorID(required)")
 	processorCreateCmd.MarkFlagsRequiredTogether("trigger", "window", "evitor", "operator")
 	// destroy option
-	processorDestroyCmd.Flags().StringVarP(&processorID, "processor", "p", "", "processorID(required)")
-	processorDestroyCmd.MarkFlagsRequiredTogether("processor")
+	processorDestroyCmd.Flags().StringVar(&processorID, "id", "", "processorID(required)")
+	_ = processorDestroyCmd.MarkFlagRequired("id")
 	// push data option
 	processorPushDataCmd.Flags().StringVarP(&processorID, "processor", "p", "", "processorID(required)")
 	processorPushDataCmd.Flags().StringVarP(&dataKey, "key", "k", "", "key(required")
 	processorPushDataCmd.Flags().StringVarP(&dataValue, "value", "v", "", "value(required)")
 	processorPushDataCmd.Flags().StringVarP(&dataHappenTime, "happenTime", "t", "", "happenTime(required)")
+	processorPushDataCmd.MarkFlagsRequiredTogether("processor", "key", "value", "happenTime")
 	// pop result option
 	processorPopResultCmd.Flags().StringVarP(&processorID, "processor", "p", "", "processorID(required)")
 
