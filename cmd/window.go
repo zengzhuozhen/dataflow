@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zengzhuozhen/dataflow/core"
+	"github.com/zengzhuozhen/dataflow/infra"
+	"github.com/zengzhuozhen/dataflow/infra/repo"
 	"github.com/zengzhuozhen/dataflow/service"
+	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
@@ -33,6 +37,10 @@ var windowCreateCmd = &cobra.Command{
 		period := time.Duration(windowParamPeriod) * time.Second
 		gap := time.Duration(windowParamGap) * time.Second
 		window, id := service.NewWindowFactory().CreateWindow(core.WindowType(windowType), size, period, gap)
+		infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
+			repo.NewWindowRepo(ctx, database).CreateWindow(window)
+		})
+		// she is so cute !!!!  OMG
 		service.GlobalResourcePool.Windows[id] = window
 	},
 }

@@ -1,8 +1,6 @@
 package service
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/zengzhuozhen/dataflow/core"
 	"time"
 )
@@ -54,7 +52,4 @@ func init() {
 
 	operator, id = NewOperatorFactory().CreateOperator(core.OperatorTypeSum)
 	GlobalResourcePool.Operaotr[id] = operator
-
-	str, _ := json.Marshal(window)
-	fmt.Println(string(str))
 }

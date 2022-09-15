@@ -7,6 +7,7 @@ import (
 )
 
 var subCommands = []*cobra.Command{
+	serveCmd,
 	processorCmd,
 	evictorCmd,
 	operatorCmd,
@@ -16,11 +17,7 @@ var subCommands = []*cobra.Command{
 
 var rootCmd = &cobra.Command{
 	Use:   "dataflow",
-	Short: "dataflow ",
-	Long:  `dataflow`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-	},
+	Short: "command line service for dataflow,see details by `--help`",
 }
 
 func RootExecute() {
