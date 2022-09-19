@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/zengzhuozhen/dataflow/core"
-	"time"
 )
 
 type resourcesPool struct {
@@ -22,34 +21,34 @@ func init() {
 	GlobalResourcePool.Evictor = make(map[string]core.Evictor)
 	GlobalResourcePool.Operaotr = make(map[string]core.Operator)
 
-	var (
-		trigger  core.Trigger
-		window   core.Windows
-		evictor  core.Evictor
-		operator core.Operator
-		id       string
-	)
-
+	//var (
+	//	trigger  core.Trigger
+	//	window   core.Windows
+	//	evictor  core.Evictor
+	//	operator core.Operator
+	//	id       string
+	//)
+	//
 	// init default resource
-	trigger, id = NewTriggerFactory().CreateTrigger(core.TriggerTypeCounterTrigger, 3, 0)
-	GlobalResourcePool.Trigger[id] = trigger
-	trigger, id = NewTriggerFactory().CreateTrigger(core.TriggerTypeTimerTrigger, 0, 3)
-	GlobalResourcePool.Trigger[id] = trigger
-
-	window, id = NewWindowFactory().CreateWindow(core.WindowTypeGlobal, 0, 0, 0)
-	GlobalResourcePool.Windows[id] = window
-	window, id = NewWindowFactory().CreateWindow(core.WindowTypeFixedWindow, time.Hour/2, 0, 0)
-	GlobalResourcePool.Windows[id] = window
-	window, id = NewWindowFactory().CreateWindow(core.WindowTypeSlideWindow, time.Hour/2, time.Minute*10, 0)
-	GlobalResourcePool.Windows[id] = window
-	window, id = NewWindowFactory().CreateWindow(core.WindowTypeSessionWindow, 0, 0, time.Hour/2)
-	GlobalResourcePool.Windows[id] = window
-
-	evictor, id = NewEvictorFactory().CreateEvictor(core.EvictorTypeAccumulate)
-	GlobalResourcePool.Evictor[id] = evictor
-	evictor, id = NewEvictorFactory().CreateEvictor(core.EvictorTypeRecalculate)
-	GlobalResourcePool.Evictor[id] = evictor
-
-	operator, id = NewOperatorFactory().CreateOperator(core.OperatorTypeSum)
-	GlobalResourcePool.Operaotr[id] = operator
+	//trigger, id = NewTriggerFactory().CreateTrigger(core.TriggerTypeCounterTrigger, 3, 0)
+	//GlobalResourcePool.Trigger[id] = trigger
+	//trigger, id = NewTriggerFactory().CreateTrigger(core.TriggerTypeTimerTrigger, 0, 3)
+	//GlobalResourcePool.Trigger[id] = trigger
+	//
+	//window, id = NewWindowFactory().CreateWindow(WindowCreateDTO{Type: core.WindowTypeGlobal})
+	//GlobalResourcePool.Windows[id] = window
+	//window, id = NewWindowFactory().CreateWindow(WindowCreateDTO{Type: core.WindowTypeFixedWindow, Size: 1800})
+	//GlobalResourcePool.Windows[id] = window
+	//window, id = NewWindowFactory().CreateWindow(WindowCreateDTO{Type: core.WindowTypeSlideWindow, Size: 1800, Period: 600})
+	//GlobalResourcePool.Windows[id] = window
+	//window, id = NewWindowFactory().CreateWindow(WindowCreateDTO{Type: core.WindowTypeSessionWindow, Gap: 1800})
+	//GlobalResourcePool.Windows[id] = window
+	//
+	//evictor, id = NewEvictorFactory().CreateEvictor(core.EvictorTypeAccumulate)
+	//GlobalResourcePool.Evictor[id] = evictor
+	//evictor, id = NewEvictorFactory().CreateEvictor(core.EvictorTypeRecalculate)
+	//GlobalResourcePool.Evictor[id] = evictor
+	//
+	//operator, id = NewOperatorFactory().CreateOperator(core.OperatorTypeSum)
+	//GlobalResourcePool.Operaotr[id] = operator
 }

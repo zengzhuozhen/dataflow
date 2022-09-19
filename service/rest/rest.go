@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,18 +23,19 @@ func NewRestService() *Service {
 	}
 }
 
-func (s *Service) Serve() {
+func (s *Service) Serve(port int) {
 	s.registerWindows(s.gin.Group("windows"))
 	s.registerTrigger(s.gin.Group("trigger"))
 	s.registerEvcitor(s.gin.Group("evictor"))
 	s.registerOperator(s.gin.Group("operator"))
 
-	if err := s.gin.Run(); err != nil {
+	if err := s.gin.Run(fmt.Sprintf(":%d", port)); err != nil {
 		panic(err)
 	}
 }
 
 func (s *Service) registerWindows(group *gin.RouterGroup) {
+	group.GET("", s.windowHandler.GetList)
 	group.GET(":id", s.windowHandler.GetById)
 	group.POST("", s.windowHandler.Create)
 	group.DELETE(":id", s.windowHandler.Delete)

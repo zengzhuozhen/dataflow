@@ -17,8 +17,9 @@ type Trigger interface {
 }
 
 type counterTrigger struct {
-	count     int
-	readyChan chan struct{}
+	count            int
+	lastTriggerCount int
+	readyChan        chan struct{}
 }
 
 func (c counterTrigger) OnReady() <-chan struct{} {
@@ -39,7 +40,8 @@ func (c counterTrigger) Run(ctx context.Context, windowBase *windowBase) {
 			close(c.readyChan)
 			return
 		default:
-			if len(windowBase.data) >= c.count {
+			if len(windowBase.data) >= c.count && len(windowBase.data) != c.lastTriggerCount {
+				c.lastTriggerCount = len(windowBase.data)
 				c.readyChan <- struct{}{}
 			}
 		}

@@ -228,7 +228,6 @@ func TestBuildProcessor_Session_Windows_Auto_Merge(t *testing.T) {
 	if sum.Key != "zzz" || sum.Value != 6 {
 		t.Errorf("sum.Key:%s,sum.Value:%d", sum.Key, sum.Value)
 	}
-
 }
 
 func helperParseTimeNoError(timeValue string) time.Time {

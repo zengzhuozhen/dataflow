@@ -2,7 +2,7 @@ package infra
 
 import (
 	"context"
-	"github.com/zengzhuozhen/dataflow/core"
+	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -10,27 +10,31 @@ import (
 )
 
 type WindowsRepo interface {
-	CreateWindow(windows core.Windows)
+	CreateWindow(window *model.Window) string
 	DeleteWindow(id string)
-	GetWindowById(id string) core.Windows
+	GetWindowById(id string) *model.Window
+	GetAllWindows() (windowsList []*model.Window)
 }
 
 type TriggerRepo interface {
-	CreateTrigger()
-	DeleteTrigger()
-	GetTriggerById()
+	CreateTrigger(trigger *model.Trigger) string
+	DeleteTrigger(id string)
+	GetTriggerById(id string) *model.Trigger
+	GetAllTriggers() (triggerList []*model.Trigger)
 }
 
 type EvictorRepo interface {
-	CreateEvictor()
-	DeleteEvictor()
-	GetEvictorById()
+	CreateEvictor(evictor *model.Evictor) string
+	DeleteEvictor(id string)
+	GetEvictorById(id string) *model.Evictor
+	GetAllEvictor() []*model.Evictor
 }
 
 type OperatorRepo interface {
-	CreateOperator()
-	DeleteOperator()
-	GetOperatorById()
+	CreateOperator(operator *model.Operator) string
+	DeleteOperator(id string)
+	GetOperatorById(id string) *model.Operator
+	GetAllOperator() []*model.Operator
 }
 
 var MongoURI string

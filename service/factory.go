@@ -83,20 +83,22 @@ func NewWindowFactory() *windowFactory {
 	return &windowFactory{}
 }
 
-func (f *windowFactory) CreateWindow(t core.WindowType, size, period, gap time.Duration) (core.Windows, string) {
-	id := uuid.New().String()
-	f.passCreateRule(t, size, period, gap)
-	switch t {
+func (f *windowFactory) CreateWindow(dto WindowCreateDTO) core.Windows {
+	size := time.Duration(dto.Size) * time.Second
+	period := time.Duration(dto.Size) * time.Second
+	gap := time.Duration(dto.Size) * time.Second
+	f.passCreateRule(dto.Type, size, period, gap)
+	switch dto.Type {
 	case core.WindowTypeGlobal:
-		return core.NewDefaultGlobalWindow(), id
+		return core.NewDefaultGlobalWindow()
 	case core.WindowTypeFixedWindow:
-		return core.NewFixedWindows(size), id
+		return core.NewFixedWindows(size)
 	case core.WindowTypeSlideWindow:
-		return core.NewSlideWindow(size, period), id
+		return core.NewSlideWindow(size, period)
 	case core.WindowTypeSessionWindow:
-		return core.NewSessionWindow(gap), id
+		return core.NewSessionWindow(gap)
 	}
-	return nil, ""
+	return nil
 }
 
 func (f *windowFactory) passCreateRule(t core.WindowType, size, period, gap time.Duration) {

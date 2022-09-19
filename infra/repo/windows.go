@@ -3,11 +3,11 @@ package repo
 import (
 	"context"
 	"encoding/json"
-	"github.com/zengzhuozhen/dataflow/core"
 	"github.com/zengzhuozhen/dataflow/infra"
+	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"time"
 )
 
 type Windows struct {
@@ -26,23 +26,26 @@ func (w *Windows) collectionName() string {
 	return "windows"
 }
 
-func (w *Windows) CreateWindow(windows core.Windows) {
+func (w *Windows) CreateWindow(window *model.Window) string {
 	var (
 		tmpJsonStr []byte
 		bsonM      bson.M
 		err        error
+		res        *mongo.InsertOneResult
 	)
-	tmpJsonStr, err = json.Marshal(windows)
+	tmpJsonStr, err = json.Marshal(window)
 	if err = json.Unmarshal(tmpJsonStr, &bsonM); err != nil {
 		panic(err)
 	}
-	if _, err = w.collection.InsertOne(w.ctx, bsonM); err != nil {
+	if res, err = w.collection.InsertOne(w.ctx, bsonM); err != nil {
 		panic(err)
 	}
+	id := res.InsertedID.(primitive.ObjectID)
+	return id.Hex()
 }
 
 func (w *Windows) DeleteWindow(id string) {
-	res, err := w.collection.DeleteOne(w.ctx, bson.D{{"id", id}})
+	res, err := w.collection.DeleteOne(w.ctx, bson.M{"_id": id})
 	if res.DeletedCount == 0 {
 		panic("delete effectRows is 0")
 	}
@@ -51,29 +54,30 @@ func (w *Windows) DeleteWindow(id string) {
 	}
 }
 
-func (w *Windows) GetWindowById(id string) core.Windows {
-	res := w.collection.FindOne(w.ctx, bson.D{{"id", id}})
+func (w *Windows) GetWindowById(id string) *model.Window {
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	res := w.collection.FindOne(w.ctx, bson.M{"_id": objectId})
 	if res.Err() != nil {
 		panic(res.Err())
 	}
-	var windowDoc bson.M
-	if err := res.Decode(&windowDoc); err != nil {
+	windowModel := new(model.Window)
+	if err := res.Decode(&windowModel); err != nil {
 		panic(err)
 	}
-	return w.toWindow(windowDoc)
+	return windowModel
 }
 
-func (w *Windows) toWindow(doc bson.M) core.Windows {
-	if gap, ok := doc["gap"]; ok {
-		gap := gap.(time.Duration) * time.Second
-		return core.NewSessionWindow(gap)
-	} else if period, ok := doc["period"]; ok {
-		size := doc["size"].(time.Duration) * time.Second
-		period := period.(time.Duration) * time.Second
-		return core.NewSlideWindow(size, period)
-	} else if size, ok := doc["size"]; ok {
-		size := size.(time.Duration) * time.Second
-		return core.NewFixedWindows(size)
+func (w *Windows) GetAllWindows() (windowsList []*model.Window) {
+	cursor, err := w.collection.Find(w.ctx, bson.D{})
+	if err != nil {
+		panic(err)
 	}
-	return core.NewDefaultGlobalWindow()
+	for cursor.Next(w.ctx) {
+		windowModel := new(model.Window)
+		if err := cursor.Decode(&windowModel); err != nil {
+			panic(err)
+		}
+		windowsList = append(windowsList, windowModel)
+	}
+	return
 }
