@@ -42,18 +42,21 @@ func (s *Service) registerWindows(group *gin.RouterGroup) {
 }
 
 func (s *Service) registerTrigger(group *gin.RouterGroup) {
+	group.GET("", s.triggerHandler.GetList)
 	group.GET(":id", s.triggerHandler.GetById)
 	group.POST("", s.triggerHandler.Create)
 	group.DELETE(":id", s.triggerHandler.Delete)
 }
 
 func (s *Service) registerOperator(group *gin.RouterGroup) {
+	group.GET("", s.operatorHandler.GetList)
 	group.GET(":id", s.operatorHandler.GetById)
 	group.POST("", s.operatorHandler.Create)
 	group.DELETE(":id", s.operatorHandler.Delete)
 }
 
 func (s *Service) registerEvcitor(group *gin.RouterGroup) {
+	group.GET("", s.evictorHandle.GetList)
 	group.GET(":id", s.evictorHandle.GetById)
 	group.POST("", s.evictorHandle.Create)
 	group.DELETE(":id", s.evictorHandle.Delete)

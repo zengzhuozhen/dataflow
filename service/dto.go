@@ -14,3 +14,11 @@ type TriggerCreateDTO struct {
 	Count  int32
 	Period int32
 }
+
+type EvictorCreateDTO struct {
+	Type int32
+}
+
+type OperatorCreateDTO struct {
+	Type int32
+}
