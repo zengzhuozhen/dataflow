@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -33,15 +32,14 @@ func (t *Trigger) CreateTrigger(model *model.Trigger) string {
 		err        error
 		res        *mongo.InsertOneResult
 	)
-	tmpJsonStr, err = json.Marshal(model)
-	if err = json.Unmarshal(tmpJsonStr, &bsonM); err != nil {
+	tmpJsonStr, err = bson.Marshal(model)
+	if err = bson.Unmarshal(tmpJsonStr, &bsonM); err != nil {
 		panic(err)
 	}
 	if res, err = t.collection.InsertOne(t.ctx, bsonM); err != nil {
 		panic(err)
 	}
-	id := res.InsertedID.(primitive.ObjectID)
-	return id.Hex()
+	return res.InsertedID.(string)
 }
 
 func (t *Trigger) DeleteTrigger(id string) {

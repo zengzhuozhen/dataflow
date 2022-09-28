@@ -26,11 +26,9 @@ func (h *OperatorRestHandler) Create(ctx *gin.Context) {
 	var dto service.OperatorCreateDTO
 	var createdId string
 	_ = ctx.ShouldBind(&dto)
-	operatorModel := &model.Operator{
-		Type: dto.Type,
-	}
+	operator := service.NewOperatorFactory().CreateOperator(dto)
 	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		createdId = repo.NewOperatorRepo(ctx, database).CreateOperator(operatorModel)
+		createdId = repo.NewOperatorRepo(ctx, database).CreateOperator(infra.ToOperatorModel(operator))
 	})
 	ctx.JSON(http.StatusOK, gin.H{"id": createdId})
 }

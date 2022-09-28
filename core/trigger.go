@@ -16,24 +16,24 @@ type Trigger interface {
 	Run(ctx context.Context, windowBase *windowBase)
 }
 
-type counterTrigger struct {
+type CounterTrigger struct {
 	count            int
 	lastTriggerCount int
 	readyChan        chan struct{}
 }
 
-func (c counterTrigger) OnReady() <-chan struct{} {
+func (c CounterTrigger) OnReady() <-chan struct{} {
 	return c.readyChan
 }
 
-func (c counterTrigger) Clone() Trigger {
-	return counterTrigger{
+func (c CounterTrigger) Clone() Trigger {
+	return CounterTrigger{
 		count:     c.count,
 		readyChan: make(chan struct{}),
 	}
 }
 
-func (c counterTrigger) Run(ctx context.Context, windowBase *windowBase) {
+func (c CounterTrigger) Run(ctx context.Context, windowBase *windowBase) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -48,8 +48,12 @@ func (c counterTrigger) Run(ctx context.Context, windowBase *windowBase) {
 	}
 }
 
+func (c CounterTrigger) GetParams() int {
+	return c.count
+}
+
 func NewCounterTrigger(count int) Trigger {
-	return counterTrigger{count: count, readyChan: make(chan struct{})}
+	return CounterTrigger{count: count, readyChan: make(chan struct{})}
 }
 
 type TimeTrigger struct {
@@ -80,6 +84,10 @@ func (t TimeTrigger) Run(ctx context.Context, windowBase *windowBase) {
 			t.readyChan <- struct{}{}
 		}
 	}
+}
+
+func (t TimeTrigger) GetParams() time.Duration {
+	return t.period
 }
 
 func NewTimerTrigger(period time.Duration) Trigger {

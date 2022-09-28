@@ -22,3 +22,17 @@ type EvictorCreateDTO struct {
 type OperatorCreateDTO struct {
 	Type int32
 }
+
+type ProcessorCreateDTO struct {
+	WindowId   string
+	TriggerId  string
+	EvictorId  string
+	OperatorId string
+}
+
+type PushDataToProcessorDTO struct {
+	ProcessorId string
+	Key         string
+	Value       string
+	HappendTime string
+}

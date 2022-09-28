@@ -26,11 +26,9 @@ func (h *EvictorRestHandler) Create(ctx *gin.Context) {
 	var dto service.EvictorCreateDTO
 	var createdId string
 	_ = ctx.ShouldBind(&dto)
-	evictorModel := &model.Evictor{
-		Type: dto.Type,
-	}
+	evictor := service.NewEvictorFactory().CreateEvictor(dto)
 	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		createdId = repo.NewEvictorRepo(ctx, database).CreateEvictor(evictorModel)
+		createdId = repo.NewEvictorRepo(ctx, database).CreateEvictor(infra.ToEvictorModel(evictor))
 	})
 	ctx.JSON(http.StatusOK, gin.H{"id": createdId})
 }

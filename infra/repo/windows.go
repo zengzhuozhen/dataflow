@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -33,15 +32,14 @@ func (w *Windows) CreateWindow(window *model.Window) string {
 		err        error
 		res        *mongo.InsertOneResult
 	)
-	tmpJsonStr, err = json.Marshal(window)
-	if err = json.Unmarshal(tmpJsonStr, &bsonM); err != nil {
+	tmpJsonStr, err = bson.Marshal(window)
+	if err = bson.Unmarshal(tmpJsonStr, &bsonM); err != nil {
 		panic(err)
 	}
 	if res, err = w.collection.InsertOne(w.ctx, bsonM); err != nil {
 		panic(err)
 	}
-	id := res.InsertedID.(primitive.ObjectID)
-	return id.Hex()
+	return res.InsertedID.(string)
 }
 
 func (w *Windows) DeleteWindow(id string) {

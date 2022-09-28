@@ -154,6 +154,10 @@ type FixedWindow struct {
 	size    time.Duration
 }
 
+func (fw *FixedWindow) GetParams() time.Duration {
+	return fw.size
+}
+
 func (fw *FixedWindow) GetWindows() []*windowBase {
 	return fw.windows
 }
@@ -195,6 +199,10 @@ type SlideWindow struct {
 	windows []*windowBase
 	size    time.Duration
 	period  time.Duration
+}
+
+func (sw *SlideWindow) GetParams() (time.Duration, time.Duration) {
+	return sw.size, sw.period
 }
 
 func (sw *SlideWindow) GetWindows() []*windowBase {
@@ -244,6 +252,10 @@ func NewSlideWindow(size, period time.Duration) *SlideWindow {
 type SessionWindow struct {
 	windows []*windowBase
 	gap     time.Duration
+}
+
+func (sw *SessionWindow) GetParams() time.Duration {
+	return sw.gap
 }
 
 func (sw *SessionWindow) GetWindows() []*windowBase {

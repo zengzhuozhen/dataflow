@@ -26,13 +26,9 @@ func (h *TriggerRestHandler) Create(ctx *gin.Context) {
 	var dto service.TriggerCreateDTO
 	var createdId string
 	_ = ctx.ShouldBind(&dto)
-	triggerModel := &model.Trigger{
-		Type:   dto.Type,
-		Count:  dto.Count,
-		Period: dto.Period,
-	}
+	trigger := service.NewTriggerFactory().CreateTrigger(dto)
 	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		createdId = repo.NewTriggerRepo(ctx, database).CreateTrigger(triggerModel)
+		createdId = repo.NewTriggerRepo(ctx, database).CreateTrigger(infra.ToTriggerModel(trigger))
 	})
 	ctx.JSON(http.StatusOK, gin.H{"id": createdId})
 }

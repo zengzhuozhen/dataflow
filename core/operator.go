@@ -13,9 +13,7 @@ type Operator interface {
 	Clone() Operator
 }
 
-type SumOperator struct {
-	ID string
-}
+type SumOperator struct{}
 
 func (s SumOperator) Operate(datum []Datum) Datum {
 	var sum int

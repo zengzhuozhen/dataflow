@@ -26,14 +26,9 @@ func (h *WindowRestHandler) Create(ctx *gin.Context) {
 	var dto service.WindowCreateDTO
 	var createdId string
 	_ = ctx.ShouldBind(&dto)
-	windowModel := &model.Window{
-		Type:   dto.Type,
-		Size:   dto.Size,
-		Period: dto.Period,
-		Gap:    dto.Gap,
-	}
+	window := service.NewWindowFactory().CreateWindow(dto)
 	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		createdId = repo.NewWindowRepo(ctx, database).CreateWindow(windowModel)
+		createdId = repo.NewWindowRepo(ctx, database).CreateWindow(infra.ToWindowModel(window))
 	})
 	ctx.JSON(http.StatusOK, gin.H{"id": createdId})
 }

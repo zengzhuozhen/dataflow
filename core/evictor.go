@@ -11,9 +11,7 @@ type Evictor interface {
 	Clone() Evictor
 }
 
-type AccumulateEvictor struct {
-	ID string
-}
+type AccumulateEvictor struct{}
 
 func (e AccumulateEvictor) BeforeOperator(windows *windowBase) {}
 

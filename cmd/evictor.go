@@ -50,7 +50,7 @@ var evictorCreateCmd = &cobra.Command{
 		createdDTO.Type = triggerType
 		createJson, _ := json.Marshal(createdDTO)
 		body.WriteString(string(createJson))
-		req, err := http.NewRequest("POST", "http://127.0.0.1:8080/evcitor", &body)
+		req, err := http.NewRequest("POST", "http://127.0.0.1:8080/evictor", &body)
 		if err != nil {
 			panic(err)
 		}

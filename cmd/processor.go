@@ -25,16 +25,16 @@ var processorCmd = &cobra.Command{
 
 var processorCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "create a new processor",
+	Short: "create a new processor and run it",
 	Run: func(cmd *cobra.Command, args []string) {
-		processor := service.NewProcessorFactory().CreateProcessor(windowID, triggerID, evitorID, operatorID)
-		processor.Start()
+		//processor := service.NewProcessorFactory().CreateProcessor(windowID, triggerID, evitorID, operatorID)
+		//processor.Start()
 	},
 }
 
 var processorDestroyCmd = &cobra.Command{
 	Use:   "destroy",
-	Short: "destroy a exists processor",
+	Short: "stop a running processor and destroy it",
 	Run: func(cmd *cobra.Command, args []string) {
 		processor := service.GlobalResourcePool.Processor[processorID]
 		processor.Stop()
