@@ -51,6 +51,7 @@ func MakeHttpRequest(method string, url string, beforeFn func(reader *bytes.Buff
 	if err != nil {
 		panic(err)
 	}
+	req.Header.Set("Content-Type", "application/json;charset=utf-8")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		panic(err)

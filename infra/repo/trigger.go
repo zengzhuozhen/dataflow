@@ -31,8 +31,7 @@ func (t *Trigger) CreateTrigger(model *model.Trigger) string {
 		err error
 		res *mongo.InsertOneResult
 	)
-	bsonM := infra.ToBson(model)
-	res, err = t.collection.InsertOne(t.ctx, bsonM)
+	res, err = t.collection.InsertOne(t.ctx, model)
 	infra.PanicErr(err)
 	return res.InsertedID.(string)
 }
@@ -47,18 +46,13 @@ func (t *Trigger) DeleteTrigger(id string) {
 }
 
 func (t *Trigger) GetTriggerById(id string) *model.Trigger {
+	triggerModel := new(model.Trigger)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	infra.PanicErr(err)
-	res := t.collection.FindOne(t.ctx, bson.M{"_id": objectId})
-	err = res.Err()
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			infra.PanicErr(err, infra.WindowNotExists)
-		}
-		infra.PanicErr(err)
+	err = t.collection.FindOne(t.ctx, bson.M{"_id": objectId}).Decode(&triggerModel)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		infra.PanicErr(err, infra.TriggerNotExists)
 	}
-	triggerModel := new(model.Trigger)
-	err = res.Decode(&triggerModel)
 	infra.PanicErr(err)
 	return triggerModel
 }

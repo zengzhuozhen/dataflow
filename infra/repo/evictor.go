@@ -31,8 +31,7 @@ func (e *Evictor) CreateEvictor(model *model.Evictor) string {
 		err error
 		res *mongo.InsertOneResult
 	)
-	bsonM := infra.ToBson(model)
-	if res, err = e.collection.InsertOne(e.ctx, bsonM); err != nil {
+	if res, err = e.collection.InsertOne(e.ctx, model); err != nil {
 		panic(err)
 	}
 	return res.InsertedID.(string)
@@ -49,19 +48,14 @@ func (e *Evictor) DeleteEvictor(id string) {
 }
 
 func (e *Evictor) GetEvictorById(id string) *model.Evictor {
+	evictorModel := new(model.Evictor)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	infra.PanicErr(err)
-	res := e.collection.FindOne(e.ctx, bson.M{"_id": objectId})
-	err = res.Err()
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			infra.PanicErr(err, infra.OperatorNotExists)
-		}
-		infra.PanicErr(err)
+	err = e.collection.FindOne(e.ctx, bson.M{"_id": objectId}).Decode(&evictorModel)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		infra.PanicErr(err, infra.EvictorNotExists)
 	}
-
-	evictorModel := new(model.Evictor)
-	infra.PanicErr(res.Decode(&evictorModel))
+	infra.PanicErr(err, infra.DBError)
 	return evictorModel
 }
 

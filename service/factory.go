@@ -123,8 +123,8 @@ func NewWindowFactory() *windowFactory {
 func (f *windowFactory) CreateWindow(dto WindowCreateDTO) core.Windows {
 	f.passCreateRule(dto)
 	size := time.Duration(dto.Size) * time.Second
-	period := time.Duration(dto.Size) * time.Second
-	gap := time.Duration(dto.Size) * time.Second
+	period := time.Duration(dto.Period) * time.Second
+	gap := time.Duration(dto.Gap) * time.Second
 	switch dto.Type {
 	case core.WindowTypeGlobal:
 		return core.NewDefaultGlobalWindow()

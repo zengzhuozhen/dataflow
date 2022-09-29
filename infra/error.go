@@ -9,18 +9,22 @@ const (
 	CommonError          = 00010001
 	DeleteEffectRowsZero = 00010002
 	JsonIterator         = 00010003
+	DBError              = 00010004
 	WindowNotExists      = 10001001
 	TriggerNotExists     = 10001002
 	OperatorNotExists    = 10001003
+	EvictorNotExists     = 10001004
 )
 
 var errText = map[int]string{
 	CommonError:          "通用错误",
 	DeleteEffectRowsZero: "删除数据影响行数为0",
 	JsonIterator:         "JSON序列化失败",
+	DBError:              "数据库出错",
 	WindowNotExists:      "窗口资源不存在",
 	TriggerNotExists:     "触发器资源不存在",
 	OperatorNotExists:    "执行器资源不存在",
+	EvictorNotExists:     "剔除器资源不存在",
 }
 
 var EmptyDetail = make(map[string]any)

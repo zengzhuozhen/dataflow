@@ -31,8 +31,7 @@ func (o *Operator) CreateOperator(model *model.Operator) string {
 		err error
 		res *mongo.InsertOneResult
 	)
-	bsonM := infra.ToBson(model)
-	res, err = o.collection.InsertOne(o.ctx, bsonM)
+	res, err = o.collection.InsertOne(o.ctx, model)
 	infra.PanicErr(err)
 	return res.InsertedID.(string)
 }
@@ -46,17 +45,14 @@ func (o *Operator) DeleteOperator(id string) {
 }
 
 func (o *Operator) GetOperatorById(id string) *model.Operator {
+	operatorModel := new(model.Operator)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	infra.PanicErr(err)
-	res := o.collection.FindOne(o.ctx, bson.M{"_id": objectId})
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			infra.PanicErr(err, infra.OperatorNotExists)
-		}
-		infra.PanicErr(err)
+	err = o.collection.FindOne(o.ctx, bson.M{"_id": objectId}).Decode(&operatorModel)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		infra.PanicErr(err, infra.OperatorNotExists)
 	}
-	operatorModel := new(model.Operator)
-	infra.PanicErr(res.Decode(&operatorModel))
+	infra.PanicErr(err, infra.DBError)
 	return operatorModel
 }
 

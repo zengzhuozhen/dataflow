@@ -31,8 +31,7 @@ func (w *Windows) CreateWindow(window *model.Window) string {
 		err error
 		res *mongo.InsertOneResult
 	)
-	bsonM := infra.ToBson(window)
-	res, err = w.collection.InsertOne(w.ctx, bsonM)
+	res, err = w.collection.InsertOne(w.ctx, window)
 	infra.PanicErr(err)
 	return res.InsertedID.(string)
 }
@@ -46,18 +45,14 @@ func (w *Windows) DeleteWindow(id string) {
 }
 
 func (w *Windows) GetWindowById(id string) *model.Window {
+	windowModel := new(model.Window)
 	objectId, err := primitive.ObjectIDFromHex(id)
 	infra.PanicErr(err)
-	res := w.collection.FindOne(w.ctx, bson.M{"_id": objectId})
-	err = res.Err()
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			infra.PanicErr(err, infra.WindowNotExists)
-		}
-		infra.PanicErr(err)
+	err = w.collection.FindOne(w.ctx, bson.M{"_id": objectId}).Decode(&windowModel)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		infra.PanicErr(err, infra.WindowNotExists)
 	}
-	windowModel := new(model.Window)
-	infra.PanicErr(res.Decode(&windowModel))
+	infra.PanicErr(err)
 	return windowModel
 }
 
