@@ -55,13 +55,15 @@ func (w *Windows) DeleteWindow(id string) {
 func (w *Windows) GetWindowById(id string) *model.Window {
 	objectId, _ := primitive.ObjectIDFromHex(id)
 	res := w.collection.FindOne(w.ctx, bson.M{"_id": objectId})
-	if res.Err() != nil {
-		panic(res.Err())
+	err := res.Err()
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			infra.PanicErr(err, infra.WindowNotExists)
+		}
+		infra.PanicErr(err)
 	}
 	windowModel := new(model.Window)
-	if err := res.Decode(&windowModel); err != nil {
-		panic(err)
-	}
+	infra.PanicErr(res.Decode(&windowModel))
 	return windowModel
 }
 

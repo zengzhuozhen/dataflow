@@ -3,7 +3,9 @@ package rest
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/zengzhuozhen/dataflow/core"
+	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/service"
+	"net/http"
 	"time"
 )
 
@@ -12,9 +14,16 @@ type ProcessorRestHandler struct{}
 func (h *ProcessorRestHandler) Create(ctx *gin.Context) {
 	var dto service.ProcessorCreateDTO
 	_ = ctx.ShouldBind(&dto)
-	processor := service.NewProcessorFactory().CreateProcessor(dto.WindowId, dto.TriggerId, dto.EvictorId, dto.OperatorId)
-	processor.Start()
-	service.GlobalResourcePool.Processor[processor.ID] = processor
+	err := infra.WarpPanic(func() {
+		processor := service.NewProcessorFactory().CreateProcessor(dto.WindowId, dto.TriggerId, dto.EvictorId, dto.OperatorId)
+		processor.Start()
+		service.GlobalResourcePool.Processor[processor.ID] = processor
+		ctx.JSON(http.StatusOK, gin.H{"id": processor.ID})
+	})
+	if err != nil {
+		ctx.JSON(http.StatusOK, err)
+	}
+
 }
 
 func (h *ProcessorRestHandler) Delete(ctx *gin.Context) {

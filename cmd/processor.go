@@ -42,13 +42,18 @@ var processorCreateCmd = &cobra.Command{
 				body.WriteString(string(createJson))
 			}, func(resp *http.Response) {
 				type createResp struct {
+					*infra.Error
 					Id string
 				}
 				var respDTO createResp
 				var respContent []byte
 				respContent, _ = ioutil.ReadAll(resp.Body)
 				json.Unmarshal(respContent, &respDTO)
-				fmt.Println("创建成功，ID：", respDTO.Id)
+				if respDTO.IsSuccess() {
+					fmt.Println("创建成功，ID：", respDTO.Id)
+				} else {
+					fmt.Println("创建失败:", respDTO.Error)
+				}
 			})
 	},
 }

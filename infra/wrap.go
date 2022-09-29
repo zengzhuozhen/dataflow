@@ -29,6 +29,21 @@ func WrapDB(fn func(ctx context.Context, database *mongo.Database)) {
 	fn(ctx, client.Database("dataflow"))
 }
 
+func WarpPanic(fn func()) (err *Error) {
+	defer func() {
+		if originErr := recover(); originErr != nil {
+			switch e := originErr.(type) {
+			case *Error:
+				err = e
+			case error:
+				err = NewError(CommonError, ErrText(CommonError), e)
+			}
+		}
+	}()
+	fn()
+	return
+}
+
 func MakeHttpRequest(method string, url string, beforeFn func(reader *bytes.Buffer), AfterFn func(response *http.Response)) {
 	var body bytes.Buffer
 	beforeFn(&body)
