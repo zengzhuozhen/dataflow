@@ -1,7 +1,14 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/zengzhuozhen/dataflow/infra"
+	"github.com/zengzhuozhen/dataflow/service"
+	"io/ioutil"
+	"net/http"
 )
 
 var (
@@ -24,8 +31,25 @@ var processorCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "create a new processor and run it",
 	Run: func(cmd *cobra.Command, args []string) {
-		//processor := service.NewProcessorFactory().CreateProcessor(windowID, triggerID, evitorID, operatorID)
-		//processor.Start()
+		infra.MakeHttpRequest("POST", "http://127.0.0.1:8080/processor",
+			func(body *bytes.Buffer) {
+				var createdDTO service.ProcessorCreateDTO
+				createdDTO.WindowId = windowID
+				createdDTO.OperatorId = operatorID
+				createdDTO.EvictorId = evitorID
+				createdDTO.TriggerId = triggerID
+				createJson, _ := json.Marshal(createdDTO)
+				body.WriteString(string(createJson))
+			}, func(resp *http.Response) {
+				type createResp struct {
+					Id string
+				}
+				var respDTO createResp
+				var respContent []byte
+				respContent, _ = ioutil.ReadAll(resp.Body)
+				json.Unmarshal(respContent, &respDTO)
+				fmt.Println("创建成功，ID：", respDTO.Id)
+			})
 	},
 }
 
@@ -33,9 +57,9 @@ var processorDestroyCmd = &cobra.Command{
 	Use:   "destroy",
 	Short: "stop a running processor and destroy it",
 	Run: func(cmd *cobra.Command, args []string) {
-		//processor := service.GlobalResourcePool.Processor[processorID]
-		//processor.Stop()
-		//delete(service.GlobalResourcePool.Processor, processorID)
+		infra.MakeHttpRequest("DELETE", "http://127.0.0.1:8080/processor/"+processorID,
+			func(reader *bytes.Buffer) {},
+			func(response *http.Response) { fmt.Println("删除成功") })
 	},
 }
 
@@ -43,13 +67,19 @@ var processorPushDataCmd = &cobra.Command{
 	Use:   "push",
 	Short: "push data to processor",
 	Run: func(cmd *cobra.Command, args []string) {
-		//processor := service.GlobalResourcePool.Processor[processorID]
-		//t, _ := time.Parse("2006-01-02 15:04:05", dataHappenTime)
-		//processor.PushData(core.Datum{
-		//	Key:       dataKey,
-		//	Value:     dataValue,
-		//	EventTime: t,
-		//})
+		infra.MakeHttpRequest("PUT", fmt.Sprintf("http://127.0.0.1:8080/processor/%s/push", processorID),
+			func(body *bytes.Buffer) {
+				var pushDTO service.PushDataToProcessorDTO
+				pushDTO.Key = dataKey
+				pushDTO.Value = dataValue
+				pushDTO.HappendTime = dataHappenTime
+				pushDTO.ProcessorId = processorID
+				pushJson, _ := json.Marshal(pushDTO)
+				body.WriteString(string(pushJson))
+			},
+			func(response *http.Response) {
+				fmt.Println("发送成功")
+			})
 	},
 }
 
@@ -57,8 +87,20 @@ var processorPopResultCmd = &cobra.Command{
 	Use:   "pop",
 	Short: "pop processor result",
 	Run: func(cmd *cobra.Command, args []string) {
-		//processor := service.GlobalResourcePool.Processor[processorID]
-		//processor.PopResult()
+		infra.MakeHttpRequest("PUT", fmt.Sprintf("http://127.0.0.1:8080/processor/%s/pop", processorID),
+			func(reader *bytes.Buffer) {},
+			func(resp *http.Response) {
+				type popeResp struct {
+					key   string
+					value string
+				}
+				var respDTO popeResp
+				var respContent []byte
+				respContent, _ = ioutil.ReadAll(resp.Body)
+				json.Unmarshal(respContent, &respDTO)
+				fmt.Printf("计算结构:Key:%s,Value: %s \n", respDTO.key, respDTO.value)
+			},
+		)
 	},
 }
 

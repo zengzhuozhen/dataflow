@@ -11,6 +11,7 @@ type Service struct {
 	triggerHandler  *TriggerRestHandler
 	operatorHandler *OperatorRestHandler
 	evictorHandle   *EvictorRestHandler
+	processorHandle *ProcessorRestHandler
 }
 
 func NewRestService() *Service {
@@ -20,6 +21,7 @@ func NewRestService() *Service {
 		triggerHandler:  new(TriggerRestHandler),
 		operatorHandler: new(OperatorRestHandler),
 		evictorHandle:   new(EvictorRestHandler),
+		processorHandle: new(ProcessorRestHandler),
 	}
 }
 
@@ -28,6 +30,7 @@ func (s *Service) Serve(port int) {
 	s.registerTrigger(s.gin.Group("trigger"))
 	s.registerEvcitor(s.gin.Group("evictor"))
 	s.registerOperator(s.gin.Group("operator"))
+	s.registerProcessor(s.gin.Group("processor"))
 
 	if err := s.gin.Run(fmt.Sprintf(":%d", port)); err != nil {
 		panic(err)
@@ -60,4 +63,11 @@ func (s *Service) registerEvcitor(group *gin.RouterGroup) {
 	group.GET(":id", s.evictorHandle.GetById)
 	group.POST("", s.evictorHandle.Create)
 	group.DELETE(":id", s.evictorHandle.Delete)
+}
+
+func (s *Service) registerProcessor(group *gin.RouterGroup) {
+	group.POST("", s.processorHandle.Create)
+	group.DELETE(":id", s.processorHandle.Delete)
+	group.PUT(":id/push", s.processorHandle.PushData)
+	group.PUT("id/pop", s.processorHandle.PopResult)
 }
