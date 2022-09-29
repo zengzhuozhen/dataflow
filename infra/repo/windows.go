@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,35 +28,28 @@ func (w *Windows) collectionName() string {
 
 func (w *Windows) CreateWindow(window *model.Window) string {
 	var (
-		tmpJsonStr []byte
-		bsonM      bson.M
-		err        error
-		res        *mongo.InsertOneResult
+		err error
+		res *mongo.InsertOneResult
 	)
-	tmpJsonStr, err = bson.Marshal(window)
-	if err = bson.Unmarshal(tmpJsonStr, &bsonM); err != nil {
-		panic(err)
-	}
-	if res, err = w.collection.InsertOne(w.ctx, bsonM); err != nil {
-		panic(err)
-	}
+	bsonM := infra.ToBson(window)
+	res, err = w.collection.InsertOne(w.ctx, bsonM)
+	infra.PanicErr(err)
 	return res.InsertedID.(string)
 }
 
 func (w *Windows) DeleteWindow(id string) {
 	res, err := w.collection.DeleteOne(w.ctx, bson.M{"_id": id})
+	infra.PanicErr(err)
 	if res.DeletedCount == 0 {
-		panic("delete effectRows is 0")
-	}
-	if err != nil {
-		panic(err)
+		infra.PanicErr(errors.New(""), infra.DeleteEffectRowsZero)
 	}
 }
 
 func (w *Windows) GetWindowById(id string) *model.Window {
-	objectId, _ := primitive.ObjectIDFromHex(id)
+	objectId, err := primitive.ObjectIDFromHex(id)
+	infra.PanicErr(err)
 	res := w.collection.FindOne(w.ctx, bson.M{"_id": objectId})
-	err := res.Err()
+	err = res.Err()
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			infra.PanicErr(err, infra.WindowNotExists)
@@ -69,14 +63,11 @@ func (w *Windows) GetWindowById(id string) *model.Window {
 
 func (w *Windows) GetAllWindows() (windowsList []*model.Window) {
 	cursor, err := w.collection.Find(w.ctx, bson.D{})
-	if err != nil {
-		panic(err)
-	}
+	infra.PanicErr(err)
 	for cursor.Next(w.ctx) {
 		windowModel := new(model.Window)
-		if err := cursor.Decode(&windowModel); err != nil {
-			panic(err)
-		}
+		err = cursor.Decode(&windowModel)
+		infra.PanicErr(err)
 		windowsList = append(windowsList, windowModel)
 	}
 	return

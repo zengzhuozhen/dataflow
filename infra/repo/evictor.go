@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,15 +28,10 @@ func (e *Evictor) collectionName() string {
 
 func (e *Evictor) CreateEvictor(model *model.Evictor) string {
 	var (
-		tmpJsonStr []byte
-		bsonM      bson.M
-		err        error
-		res        *mongo.InsertOneResult
+		err error
+		res *mongo.InsertOneResult
 	)
-	tmpJsonStr, err = bson.Marshal(model)
-	if err = bson.Unmarshal(tmpJsonStr, &bsonM); err != nil {
-		panic(err)
-	}
+	bsonM := infra.ToBson(model)
 	if res, err = e.collection.InsertOne(e.ctx, bsonM); err != nil {
 		panic(err)
 	}
@@ -45,7 +41,7 @@ func (e *Evictor) CreateEvictor(model *model.Evictor) string {
 func (e *Evictor) DeleteEvictor(id string) {
 	res, err := e.collection.DeleteOne(e.ctx, bson.M{"_id": id})
 	if res.DeletedCount == 0 {
-		panic("delete effectRows is 0")
+		infra.PanicErr(errors.New(""), infra.DeleteEffectRowsZero)
 	}
 	if err != nil {
 		panic(err)
@@ -53,28 +49,28 @@ func (e *Evictor) DeleteEvictor(id string) {
 }
 
 func (e *Evictor) GetEvictorById(id string) *model.Evictor {
-	objectId, _ := primitive.ObjectIDFromHex(id)
+	objectId, err := primitive.ObjectIDFromHex(id)
+	infra.PanicErr(err)
 	res := e.collection.FindOne(e.ctx, bson.M{"_id": objectId})
-	if res.Err() != nil {
-		panic(res.Err())
+	err = res.Err()
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			infra.PanicErr(err, infra.OperatorNotExists)
+		}
+		infra.PanicErr(err)
 	}
+
 	evictorModel := new(model.Evictor)
-	if err := res.Decode(&evictorModel); err != nil {
-		panic(err)
-	}
+	infra.PanicErr(res.Decode(&evictorModel))
 	return evictorModel
 }
 
 func (e *Evictor) GetAllEvictor() (evictorList []*model.Evictor) {
 	cursor, err := e.collection.Find(e.ctx, bson.D{})
-	if err != nil {
-		panic(err)
-	}
+	infra.PanicErr(err)
 	for cursor.Next(e.ctx) {
 		evictorModel := new(model.Evictor)
-		if err := cursor.Decode(&evictorModel); err != nil {
-			panic(err)
-		}
+		infra.PanicErr(cursor.Decode(&evictorModel))
 		evictorList = append(evictorList, evictorModel)
 	}
 	return

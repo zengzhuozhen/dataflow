@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,54 +28,50 @@ func (t *Trigger) collectionName() string {
 
 func (t *Trigger) CreateTrigger(model *model.Trigger) string {
 	var (
-		tmpJsonStr []byte
-		bsonM      bson.M
-		err        error
-		res        *mongo.InsertOneResult
+		err error
+		res *mongo.InsertOneResult
 	)
-	tmpJsonStr, err = bson.Marshal(model)
-	if err = bson.Unmarshal(tmpJsonStr, &bsonM); err != nil {
-		panic(err)
-	}
-	if res, err = t.collection.InsertOne(t.ctx, bsonM); err != nil {
-		panic(err)
-	}
+	bsonM := infra.ToBson(model)
+	res, err = t.collection.InsertOne(t.ctx, bsonM)
+	infra.PanicErr(err)
 	return res.InsertedID.(string)
 }
 
 func (t *Trigger) DeleteTrigger(id string) {
 	res, err := t.collection.DeleteOne(t.ctx, bson.M{"_id": id})
+	infra.PanicErr(err)
 	if res.DeletedCount == 0 {
-		panic("delete effectRows is 0")
+		infra.PanicErr(errors.New(""), infra.DeleteEffectRowsZero)
 	}
-	if err != nil {
-		panic(err)
-	}
+	infra.PanicErr(err)
 }
 
 func (t *Trigger) GetTriggerById(id string) *model.Trigger {
-	objectId, _ := primitive.ObjectIDFromHex(id)
+	objectId, err := primitive.ObjectIDFromHex(id)
+	infra.PanicErr(err)
 	res := t.collection.FindOne(t.ctx, bson.M{"_id": objectId})
-	if res.Err() != nil {
-		panic(res.Err())
+	err = res.Err()
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			infra.PanicErr(err, infra.WindowNotExists)
+		}
+		infra.PanicErr(err)
 	}
 	triggerModel := new(model.Trigger)
-	if err := res.Decode(&triggerModel); err != nil {
-		panic(err)
-	}
+	err = res.Decode(&triggerModel)
+	infra.PanicErr(err)
 	return triggerModel
 }
 
 func (t *Trigger) GetAllTriggers() (triggerList []*model.Trigger) {
 	cursor, err := t.collection.Find(t.ctx, bson.D{})
-	if err != nil {
-		panic(err)
-	}
+	infra.PanicErr(err)
 	for cursor.Next(t.ctx) {
 		triggerModel := new(model.Trigger)
-		if err := cursor.Decode(&triggerModel); err != nil {
+		if err = cursor.Decode(&triggerModel); err != nil {
 			panic(err)
 		}
+		infra.PanicErr(err)
 		triggerList = append(triggerList, triggerModel)
 	}
 	return

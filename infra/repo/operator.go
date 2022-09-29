@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,54 +28,44 @@ func (o *Operator) collectionName() string {
 
 func (o *Operator) CreateOperator(model *model.Operator) string {
 	var (
-		tmpJsonStr []byte
-		bsonM      bson.M
-		err        error
-		res        *mongo.InsertOneResult
+		err error
+		res *mongo.InsertOneResult
 	)
-	tmpJsonStr, err = bson.Marshal(model)
-	if err = bson.Unmarshal(tmpJsonStr, &bsonM); err != nil {
-		panic(err)
-	}
-	if res, err = o.collection.InsertOne(o.ctx, bsonM); err != nil {
-		panic(err)
-	}
+	bsonM := infra.ToBson(model)
+	res, err = o.collection.InsertOne(o.ctx, bsonM)
+	infra.PanicErr(err)
 	return res.InsertedID.(string)
 }
 
 func (o *Operator) DeleteOperator(id string) {
 	res, err := o.collection.DeleteOne(o.ctx, bson.M{"_id": id})
+	infra.PanicErr(err)
 	if res.DeletedCount == 0 {
-		panic("delete effectRows is 0")
-	}
-	if err != nil {
-		panic(err)
+		infra.PanicErr(errors.New(""), infra.DeleteEffectRowsZero)
 	}
 }
 
 func (o *Operator) GetOperatorById(id string) *model.Operator {
-	objectId, _ := primitive.ObjectIDFromHex(id)
+	objectId, err := primitive.ObjectIDFromHex(id)
+	infra.PanicErr(err)
 	res := o.collection.FindOne(o.ctx, bson.M{"_id": objectId})
-	if res.Err() != nil {
-		panic(res.Err())
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			infra.PanicErr(err, infra.OperatorNotExists)
+		}
+		infra.PanicErr(err)
 	}
 	operatorModel := new(model.Operator)
-	if err := res.Decode(&operatorModel); err != nil {
-		panic(err)
-	}
+	infra.PanicErr(res.Decode(&operatorModel))
 	return operatorModel
 }
 
 func (o *Operator) GetAllOperator() (operatorList []*model.Operator) {
 	cursor, err := o.collection.Find(o.ctx, bson.D{})
-	if err != nil {
-		panic(err)
-	}
+	infra.PanicErr(err)
 	for cursor.Next(o.ctx) {
 		operatorModel := new(model.Operator)
-		if err := cursor.Decode(&operatorModel); err != nil {
-			panic(err)
-		}
+		infra.PanicErr(cursor.Decode(&operatorModel))
 		operatorList = append(operatorList, operatorModel)
 	}
 	return

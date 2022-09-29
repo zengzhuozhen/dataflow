@@ -6,13 +6,21 @@ import (
 )
 
 const (
-	CommonError     = 00010001
-	WindowNotExists = 10001001
+	CommonError          = 00010001
+	DeleteEffectRowsZero = 00010002
+	JsonIterator         = 00010003
+	WindowNotExists      = 10001001
+	TriggerNotExists     = 10001002
+	OperatorNotExists    = 10001003
 )
 
 var errText = map[int]string{
-	CommonError:     "通用错误",
-	WindowNotExists: "窗口资源不存在",
+	CommonError:          "通用错误",
+	DeleteEffectRowsZero: "删除数据影响行数为0",
+	JsonIterator:         "JSON序列化失败",
+	WindowNotExists:      "窗口资源不存在",
+	TriggerNotExists:     "触发器资源不存在",
+	OperatorNotExists:    "执行器资源不存在",
 }
 
 var EmptyDetail = make(map[string]any)

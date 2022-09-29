@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/zengzhuozhen/dataflow/core"
 	"github.com/zengzhuozhen/dataflow/infra/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"time"
 )
 
@@ -126,4 +127,12 @@ func ToEvictorModel(evictor core.Evictor) *model.Evictor {
 		Id:   uuid.New().String(),
 		Type: evictorType,
 	}
+}
+
+func ToBson(model any) bson.M {
+	var bsonM bson.M
+	tmpJsonStr, err := bson.Marshal(model)
+	PanicErr(err, JsonIterator)
+	PanicErr(bson.Unmarshal(tmpJsonStr, &bsonM), JsonIterator)
+	return bsonM
 }
