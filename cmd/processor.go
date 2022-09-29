@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/zengzhuozhen/dataflow/core"
-	"github.com/zengzhuozhen/dataflow/service"
-	"time"
 )
 
 var (
@@ -36,9 +33,9 @@ var processorDestroyCmd = &cobra.Command{
 	Use:   "destroy",
 	Short: "stop a running processor and destroy it",
 	Run: func(cmd *cobra.Command, args []string) {
-		processor := service.GlobalResourcePool.Processor[processorID]
-		processor.Stop()
-		delete(service.GlobalResourcePool.Processor, processorID)
+		//processor := service.GlobalResourcePool.Processor[processorID]
+		//processor.Stop()
+		//delete(service.GlobalResourcePool.Processor, processorID)
 	},
 }
 
@@ -46,13 +43,13 @@ var processorPushDataCmd = &cobra.Command{
 	Use:   "push",
 	Short: "push data to processor",
 	Run: func(cmd *cobra.Command, args []string) {
-		processor := service.GlobalResourcePool.Processor[processorID]
-		t, _ := time.Parse("2006-01-02 15:04:05", dataHappenTime)
-		processor.PushData(core.Datum{
-			Key:       dataKey,
-			Value:     dataValue,
-			EventTime: t,
-		})
+		//processor := service.GlobalResourcePool.Processor[processorID]
+		//t, _ := time.Parse("2006-01-02 15:04:05", dataHappenTime)
+		//processor.PushData(core.Datum{
+		//	Key:       dataKey,
+		//	Value:     dataValue,
+		//	EventTime: t,
+		//})
 	},
 }
 
@@ -60,8 +57,8 @@ var processorPopResultCmd = &cobra.Command{
 	Use:   "pop",
 	Short: "pop processor result",
 	Run: func(cmd *cobra.Command, args []string) {
-		processor := service.GlobalResourcePool.Processor[processorID]
-		processor.PopResult()
+		//processor := service.GlobalResourcePool.Processor[processorID]
+		//processor.PopResult()
 	},
 }
 

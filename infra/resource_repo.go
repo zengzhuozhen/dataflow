@@ -1,12 +1,7 @@
 package infra
 
 import (
-	"context"
 	"github.com/zengzhuozhen/dataflow/infra/model"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
-	"time"
 )
 
 type WindowsRepo interface {
@@ -38,22 +33,3 @@ type OperatorRepo interface {
 }
 
 var MongoURI string
-
-func WrapDB(fn func(ctx context.Context, database *mongo.Database)) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(MongoURI))
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
-	err = client.Ping(ctx, readpref.Primary())
-	if err != nil {
-		panic(err)
-	}
-	fn(ctx, client.Database("dataflow"))
-}
