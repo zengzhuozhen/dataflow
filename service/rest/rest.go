@@ -1,8 +1,11 @@
 package rest
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/zengzhuozhen/dataflow/infra"
+	"net/http"
 )
 
 type Service struct {
@@ -25,7 +28,27 @@ func NewRestService() *Service {
 	}
 }
 
+func (s *Service) recoveryMiddleware(c *gin.Context, err any) {
+	if originErr := recover(); originErr != nil {
+		switch e := originErr.(type) {
+		case *infra.Error:
+			err = e
+		case error:
+			err = infra.NewError(infra.CommonError, infra.ErrText(infra.CommonError), e)
+		default:
+			err = infra.NewError(infra.CommonError, infra.ErrText(infra.CommonError), errors.New(fmt.Sprintf("%s", e)))
+		}
+	}
+	if err != nil {
+		c.JSON(http.StatusOK, err)
+	}
+}
+
 func (s *Service) Serve(port int) {
+	s.gin.Use(
+		gin.Logger(),
+		gin.CustomRecovery(s.recoveryMiddleware),
+	)
 	s.registerWindows(s.gin.Group("windows"))
 	s.registerTrigger(s.gin.Group("trigger"))
 	s.registerEvcitor(s.gin.Group("evictor"))

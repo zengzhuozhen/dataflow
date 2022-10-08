@@ -20,6 +20,7 @@ func (h *EvictorRestHandler) GetById(ctx *gin.Context) {
 		trigger = repo.NewEvictorRepo(ctx, database).GetEvictorById(id)
 	})
 	ctx.JSON(http.StatusOK, trigger)
+
 }
 
 func (h *EvictorRestHandler) Create(ctx *gin.Context) {
@@ -39,6 +40,7 @@ func (h *EvictorRestHandler) Delete(ctx *gin.Context) {
 		repo.NewEvictorRepo(ctx, database).DeleteEvictor(id)
 	})
 	ctx.JSON(http.StatusOK, gin.H{})
+
 }
 
 func (h *EvictorRestHandler) GetList(ctx *gin.Context) {

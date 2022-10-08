@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"github.com/zengzhuozhen/dataflow/core"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/repo"
@@ -35,7 +36,6 @@ func (f *processorFactory) CreateProcessor(windowID, triggerID, evictorID, opera
 		Evictor(evictor).
 		Operator(operator).
 		Build()
-	GlobalResourcePool.Processor[processor.ID] = processor
 	return processor
 }
 
@@ -142,15 +142,15 @@ func (f *windowFactory) passCreateRule(dto WindowCreateDTO) {
 	switch dto.Type {
 	case core.WindowTypeFixedWindow:
 		if dto.Size == 0 {
-			panic("size can't not be zero value")
+			infra.PanicErr(errors.New("size can't not be zero value"), infra.BusinessParamsError)
 		}
 	case core.WindowTypeSlideWindow:
 		if dto.Size == 0 || dto.Period == 0 {
-			panic("size or period can't not be zero value")
+			infra.PanicErr(errors.New("size or period can't not be zero value"), infra.BusinessParamsError)
 		}
 	case core.WindowTypeSessionWindow:
 		if dto.Gap == 0 {
-			panic("gap can't not be zero value")
+			infra.PanicErr(errors.New("gap can't not be zero value"), infra.BusinessParamsError)
 		}
 	}
 }
