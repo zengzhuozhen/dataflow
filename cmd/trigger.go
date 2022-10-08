@@ -25,12 +25,20 @@ var triggerCmd = &cobra.Command{
 		infra.MakeHttpRequest("GET", "http://127.0.0.1:8080/trigger",
 			func(reader *bytes.Buffer) {},
 			func(resp *http.Response) {
+				type GetListResp struct {
+					*infra.Error
+					resource []*model.Trigger
+				}
 				var respContent []byte
-				var modelList []*model.Trigger
+				var respDTO GetListResp
 				respContent, _ = ioutil.ReadAll(resp.Body)
-				json.Unmarshal(respContent, &modelList)
-				for _, i := range modelList {
-					fmt.Println(i.Information())
+				json.Unmarshal(respContent, &respDTO)
+				if respDTO.IsSuccess() {
+					for _, i := range respDTO.resource {
+						fmt.Println(i.Information())
+					}
+				} else {
+					fmt.Println("获取列表失败", respDTO.Message)
 				}
 			})
 	},
@@ -51,13 +59,19 @@ var triggerCreateCmd = &cobra.Command{
 			},
 			func(resp *http.Response) {
 				type createResp struct {
+					*infra.Error
 					Id string
 				}
 				var respDTO createResp
 				var respContent []byte
 				respContent, _ = ioutil.ReadAll(resp.Body)
 				json.Unmarshal(respContent, &respDTO)
-				fmt.Println("创建成功，ID：", respDTO.Id)
+				if respDTO.IsSuccess() {
+					fmt.Println("创建成功，ID：", respDTO.Id)
+				} else {
+					fmt.Println("创建失败,原因: ", respDTO.Message)
+				}
+
 			})
 	},
 }
@@ -68,7 +82,20 @@ var triggerDestroyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		infra.MakeHttpRequest("DELETE", "http://127.0.0.1:8080/trigger/"+triggerID,
 			func(reader *bytes.Buffer) {},
-			func(response *http.Response) { fmt.Println("删除成功") })
+			func(resp *http.Response) {
+				type deleteResp struct {
+					*infra.Error
+				}
+				var respDTO deleteResp
+				var respContent []byte
+				respContent, _ = ioutil.ReadAll(resp.Body)
+				json.Unmarshal(respContent, &respDTO)
+				if respDTO.IsSuccess() {
+					fmt.Println("删除成功")
+				} else {
+					fmt.Println("删除失败，原因:", respDTO.Message)
+				}
+			})
 	},
 }
 
