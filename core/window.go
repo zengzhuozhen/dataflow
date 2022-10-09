@@ -97,6 +97,9 @@ func findStartAndEndTime(eventTime time.Time, size, passPeriod time.Duration) (s
 	if size < time.Hour && size >= time.Minute {
 		baseTime = eventTime.Truncate(time.Duration(size.Minutes()) * time.Minute)
 	}
+	if size < time.Minute && size >= time.Second {
+		baseTime = eventTime.Truncate(time.Duration(size.Seconds()) * time.Second)
+	}
 	return baseTime.Add(passPeriod), baseTime.Add(passPeriod).Add(size)
 }
 
