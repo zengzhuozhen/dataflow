@@ -2,7 +2,8 @@ package core
 
 import "time"
 
-type Datum struct {
+// DU dateUnit
+type DU struct {
 	Key              string
 	Value            any
 	EventTime        time.Time

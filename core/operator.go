@@ -9,24 +9,24 @@ const (
 )
 
 type Operator interface {
-	Operate(datum []Datum) Datum
+	Operate(DUs []DU) DU
 	Clone() Operator
 }
 
 type SumOperator struct{}
 
-func (s SumOperator) Operate(datum []Datum) Datum {
+func (s SumOperator) Operate(DUs []DU) DU {
 	var sum int
 	var key string
 
-	for _, data := range datum {
+	for _, data := range DUs {
 		if add, ok := data.Value.(int); ok {
 			sum = sum + add
 		}
 		key = data.Key
 	}
 
-	return Datum{
+	return DU{
 		Key:       key,
 		Value:     sum,
 		EventTime: time.Now(),

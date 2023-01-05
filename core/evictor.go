@@ -30,7 +30,7 @@ func (e RecalculateEvictor) BeforeOperator(windows *windowBase) {}
 func (e RecalculateEvictor) AfterOperator(windows *windowBase) {
 	windows.mutex.Lock()
 	defer windows.mutex.Unlock()
-	windows.data = []Datum{}
+	windows.data = []DU{}
 }
 
 func (e RecalculateEvictor) Clone() Evictor {

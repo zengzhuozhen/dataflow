@@ -18,15 +18,15 @@ const (
 
 type Windows interface {
 	// AssignWindow determine which window the coming data will drop in and return the window
-	AssignWindow(data Datum) []*windowBase
+	AssignWindow(data DU) []*windowBase
 	// CreateWindow create a list empty window for saving data,
-	CreateWindow(data Datum, trigger Trigger, operator Operator, evictor Evictor) []*windowBase
+	CreateWindow(data DU, trigger Trigger, operator Operator, evictor Evictor) []*windowBase
 	// GetWindows return windows in processor
 	GetWindows() []*windowBase
 }
 
 type windowBase struct {
-	data        []Datum
+	data        []DU
 	startTime   time.Time
 	endTime     time.Time
 	mutex       *sync.Mutex
@@ -36,7 +36,7 @@ type windowBase struct {
 	closeNotify chan struct{}
 }
 
-func (wb *windowBase) start(ctx context.Context, output chan Datum) {
+func (wb *windowBase) start(ctx context.Context, output chan DU) {
 	childCtx, cancel := context.WithCancel(ctx)
 	go wb.trigger.Run(childCtx, wb)
 	go func() {
@@ -52,7 +52,7 @@ func (wb *windowBase) start(ctx context.Context, output chan Datum) {
 				wg := sync.WaitGroup{}
 				for _, i := range wb.GroupByKey(wb.data) {
 					wg.Add(1)
-					go func(data []Datum) {
+					go func(data []DU) {
 						defer wg.Done()
 						if wb.evictor != nil {
 							wb.evictor.BeforeOperator(wb)
@@ -71,19 +71,19 @@ func (wb *windowBase) stop() {
 	wb.closeNotify <- struct{}{}
 }
 
-func (wb *windowBase) GroupByKey(dataList []Datum) map[string][]Datum {
-	keyMap := make(map[string][]Datum)
+func (wb *windowBase) GroupByKey(dataList []DU) map[string][]DU {
+	keyMap := make(map[string][]DU)
 	for _, data := range dataList {
 		if i, exists := keyMap[data.Key]; exists {
 			keyMap[data.Key] = append(i, data)
 		} else {
-			keyMap[data.Key] = []Datum{data}
+			keyMap[data.Key] = []DU{data}
 		}
 	}
 	return keyMap
 }
 
-func (wb *windowBase) appendData(data Datum) {
+func (wb *windowBase) appendData(data DU) {
 	wb.mutex.Lock()
 	wb.data = append(wb.data, data)
 	wb.mutex.Unlock()
@@ -105,7 +105,7 @@ func findStartAndEndTime(eventTime time.Time, size, passPeriod time.Duration) (s
 
 var defaultGlobalWindow = GlobalWindow{
 	windowBase: &windowBase{
-		data:      []Datum{},
+		data:      []DU{},
 		startTime: time.Time{},
 		endTime:   time.Time{},
 		mutex:     new(sync.Mutex),
@@ -126,7 +126,7 @@ type GlobalWindow struct {
 	*sync.Once
 }
 
-func (gw *GlobalWindow) AssignWindow(data Datum) []*windowBase {
+func (gw *GlobalWindow) AssignWindow(data DU) []*windowBase {
 	window := gw.windowBase
 	gw.appendData(data)
 	gw.Once.Do(func() {
@@ -139,9 +139,9 @@ func (gw *GlobalWindow) AssignWindow(data Datum) []*windowBase {
 	return []*windowBase{window}
 }
 
-func (gw *GlobalWindow) CreateWindow(data Datum, trigger Trigger, operator Operator, evictor Evictor) []*windowBase {
+func (gw *GlobalWindow) CreateWindow(data DU, trigger Trigger, operator Operator, evictor Evictor) []*windowBase {
 	gw.windowBase = &windowBase{
-		data:      []Datum{},
+		data:      []DU{},
 		startTime: time.Time{},
 		endTime:   time.Time{},
 		mutex:     new(sync.Mutex),
@@ -165,7 +165,7 @@ func (fw *FixedWindow) GetWindows() []*windowBase {
 	return fw.windows
 }
 
-func (fw *FixedWindow) AssignWindow(data Datum) []*windowBase {
+func (fw *FixedWindow) AssignWindow(data DU) []*windowBase {
 	for _, window := range fw.windows {
 		if (data.EventTime.After(window.startTime) || data.EventTime.Equal(window.startTime)) &&
 			data.EventTime.Before(window.endTime) {
@@ -177,9 +177,9 @@ func (fw *FixedWindow) AssignWindow(data Datum) []*windowBase {
 	return []*windowBase{}
 }
 
-func (fw *FixedWindow) CreateWindow(data Datum, trigger Trigger, operator Operator, evictor Evictor) []*windowBase {
+func (fw *FixedWindow) CreateWindow(data DU, trigger Trigger, operator Operator, evictor Evictor) []*windowBase {
 	window := &windowBase{
-		data:        []Datum{},
+		data:        []DU{},
 		mutex:       new(sync.Mutex),
 		trigger:     trigger.Clone(),
 		operator:    operator.Clone(),
@@ -212,7 +212,7 @@ func (sw *SlideWindow) GetWindows() []*windowBase {
 	return sw.windows
 }
 
-func (sw *SlideWindow) AssignWindow(data Datum) []*windowBase {
+func (sw *SlideWindow) AssignWindow(data DU) []*windowBase {
 	var assignWindows []*windowBase
 	for _, window := range sw.windows {
 		if (data.EventTime.After(window.startTime) || data.EventTime.Equal(window.startTime)) &&
@@ -224,11 +224,11 @@ func (sw *SlideWindow) AssignWindow(data Datum) []*windowBase {
 	return assignWindows
 }
 
-func (sw *SlideWindow) CreateWindow(data Datum, trigger Trigger, operator Operator, evictor Evictor) (createdWindows []*windowBase) {
+func (sw *SlideWindow) CreateWindow(data DU, trigger Trigger, operator Operator, evictor Evictor) (createdWindows []*windowBase) {
 	var needPassPeriod time.Duration
 	for {
 		window := &windowBase{
-			data:        []Datum{},
+			data:        []DU{},
 			mutex:       new(sync.Mutex),
 			trigger:     trigger.Clone(),
 			operator:    operator.Clone(),
@@ -265,7 +265,7 @@ func (sw *SessionWindow) GetWindows() []*windowBase {
 	return sw.windows
 }
 
-func (sw *SessionWindow) AssignWindow(data Datum) []*windowBase {
+func (sw *SessionWindow) AssignWindow(data DU) []*windowBase {
 	var assignWindows []*windowBase
 
 	for index, window := range sw.windows {
@@ -309,9 +309,9 @@ func (sw *SessionWindow) tryMerge(index int, window *windowBase) *windowBase {
 	}
 }
 
-func (sw *SessionWindow) CreateWindow(data Datum, trigger Trigger, operator Operator, evictor Evictor) []*windowBase {
+func (sw *SessionWindow) CreateWindow(data DU, trigger Trigger, operator Operator, evictor Evictor) []*windowBase {
 	window := &windowBase{
-		data:        []Datum{},
+		data:        []DU{},
 		mutex:       new(sync.Mutex),
 		trigger:     trigger.Clone(),
 		operator:    operator.Clone(),

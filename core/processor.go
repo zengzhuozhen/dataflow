@@ -14,8 +14,8 @@ type Processor struct {
 	trigger  Trigger
 	operator Operator
 	evictor  Evictor
-	input    chan Datum
-	output   chan Datum
+	input    chan DU
+	output   chan DU
 }
 
 func BuildProcessor() *Processor {
@@ -70,7 +70,7 @@ func (p *Processor) Evictor(evictor Evictor) *Processor {
 	return p
 }
 
-func (p *Processor) Build() (*Processor, chan<- Datum, <-chan Datum) {
+func (p *Processor) Build() (*Processor, chan<- DU, <-chan DU) {
 	if p.windows == nil {
 		panic("window must be set")
 	}
@@ -80,12 +80,12 @@ func (p *Processor) Build() (*Processor, chan<- Datum, <-chan Datum) {
 	if p.operator == nil {
 		panic("operator must be set")
 	}
-	p.input = make(chan Datum)
-	p.output = make(chan Datum)
+	p.input = make(chan DU)
+	p.output = make(chan DU)
 	return p, p.input, p.output
 }
 
-func (p *Processor) PushData(Data Datum) {
+func (p *Processor) PushData(Data DU) {
 	p.input <- Data
 }
 

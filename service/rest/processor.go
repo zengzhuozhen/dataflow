@@ -31,7 +31,7 @@ func (h *ProcessorRestHandler) PushData(ctx *gin.Context) {
 	_ = ctx.ShouldBind(&dto)
 	processor := service.GlobalResourcePool.Processor[dto.ProcessorId]
 	t, _ := time.Parse("2006-01-02 15:04:05", dto.HappendTime)
-	processor.PushData(core.Datum{
+	processor.PushData(core.DU{
 		Key:       dto.Key,
 		Value:     dto.Value,
 		EventTime: t,
