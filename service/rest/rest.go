@@ -8,23 +8,30 @@ import (
 	"net/http"
 )
 
+type resourceHandler interface {
+	GetList(ctx *gin.Context)
+	GetById(ctx *gin.Context)
+	Create(ctx *gin.Context)
+	Delete(ctx *gin.Context)
+}
+
 type Service struct {
-	gin             *gin.Engine
-	windowHandler   *WindowRestHandler
-	triggerHandler  *TriggerRestHandler
-	operatorHandler *OperatorRestHandler
-	evictorHandle   *EvictorRestHandler
-	processorHandle *ProcessorRestHandler
+	gin              *gin.Engine
+	windowHandler    *WindowRestHandler
+	triggerHandler   *TriggerRestHandler
+	operatorHandler  *OperatorRestHandler
+	evictorHandler   *EvictorRestHandler
+	processorHandler *ProcessorRestHandler
 }
 
 func NewRestService() *Service {
 	return &Service{
-		gin:             gin.Default(),
-		windowHandler:   new(WindowRestHandler),
-		triggerHandler:  new(TriggerRestHandler),
-		operatorHandler: new(OperatorRestHandler),
-		evictorHandle:   new(EvictorRestHandler),
-		processorHandle: new(ProcessorRestHandler),
+		gin:              gin.Default(),
+		windowHandler:    new(WindowRestHandler),
+		triggerHandler:   new(TriggerRestHandler),
+		operatorHandler:  new(OperatorRestHandler),
+		evictorHandler:   new(EvictorRestHandler),
+		processorHandler: new(ProcessorRestHandler),
 	}
 }
 
@@ -49,48 +56,28 @@ func (s *Service) Serve(port int) {
 		gin.Logger(),
 		gin.CustomRecovery(s.recoveryMiddleware),
 	)
-	s.registerWindows(s.gin.Group("windows"))
-	s.registerTrigger(s.gin.Group("trigger"))
-	s.registerEvcitor(s.gin.Group("evictor"))
-	s.registerOperator(s.gin.Group("operator"))
-	s.registerProcessor(s.gin.Group("processor"))
+	s.registerResource(s.gin.Group("windows"), s.windowHandler)
+	s.registerResource(s.gin.Group("trigger"), s.triggerHandler)
+	s.registerResource(s.gin.Group("evictor"), s.evictorHandler)
+	s.registerResource(s.gin.Group("operator"), s.operatorHandler)
+
+	s.registerProcessor(s.gin.Group("processor"), s.processorHandler)
 
 	if err := s.gin.Run(fmt.Sprintf(":%d", port)); err != nil {
 		panic(err)
 	}
 }
 
-func (s *Service) registerWindows(group *gin.RouterGroup) {
-	group.GET("", s.windowHandler.GetList)
-	group.GET(":id", s.windowHandler.GetById)
-	group.POST("", s.windowHandler.Create)
-	group.DELETE(":id", s.windowHandler.Delete)
+func (s *Service) registerResource(group *gin.RouterGroup, handler resourceHandler) {
+	group.GET("", handler.GetList)
+	group.GET(":id", handler.GetById)
+	group.POST("", handler.Create)
+	group.DELETE(":id", handler.Delete)
 }
 
-func (s *Service) registerTrigger(group *gin.RouterGroup) {
-	group.GET("", s.triggerHandler.GetList)
-	group.GET(":id", s.triggerHandler.GetById)
-	group.POST("", s.triggerHandler.Create)
-	group.DELETE(":id", s.triggerHandler.Delete)
-}
-
-func (s *Service) registerOperator(group *gin.RouterGroup) {
-	group.GET("", s.operatorHandler.GetList)
-	group.GET(":id", s.operatorHandler.GetById)
-	group.POST("", s.operatorHandler.Create)
-	group.DELETE(":id", s.operatorHandler.Delete)
-}
-
-func (s *Service) registerEvcitor(group *gin.RouterGroup) {
-	group.GET("", s.evictorHandle.GetList)
-	group.GET(":id", s.evictorHandle.GetById)
-	group.POST("", s.evictorHandle.Create)
-	group.DELETE(":id", s.evictorHandle.Delete)
-}
-
-func (s *Service) registerProcessor(group *gin.RouterGroup) {
-	group.POST("", s.processorHandle.Create)
-	group.DELETE(":id", s.processorHandle.Delete)
-	group.PUT(":id/push", s.processorHandle.PushData)
-	group.PUT("id/pop", s.processorHandle.PopResult)
+func (s *Service) registerProcessor(group *gin.RouterGroup, handler *ProcessorRestHandler) {
+	group.POST("", handler.Create)
+	group.DELETE(":id", handler.Delete)
+	group.PUT(":id/push", handler.PushData)
+	group.PUT("id/pop", handler.PopResult)
 }
