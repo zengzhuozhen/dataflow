@@ -26,7 +26,7 @@ func GetById[T model.Resource](ctx context.Context, collection *mongo.Collection
 	infra.PanicErr(err)
 	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&res)
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		infra.PanicErr(err, infra.OperatorNotExists)
+		infra.PanicErr(err, resourceNotFoundErr(res))
 	}
 	infra.PanicErr(err, infra.DBError)
 }
@@ -53,4 +53,18 @@ func Delete(ctx context.Context, collection *mongo.Collection, id string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func resourceNotFoundErr(resource any) int64 {
+	switch resource.(type) {
+	case model.Evictor, *model.Evictor:
+		return infra.EvictorNotExists
+	case model.Window, *model.Window:
+		return infra.WindowNotExists
+	case model.Trigger, *model.Trigger:
+		return infra.TriggerNotExists
+	case model.Operator, *model.Operator:
+		return infra.OperatorNotExists
+	}
+	return 0
 }

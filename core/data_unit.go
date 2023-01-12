@@ -2,7 +2,7 @@ package core
 
 import "time"
 
-// DU dateUnit
+// DU dataUnit
 type DU struct {
 	Key              string
 	Value            any

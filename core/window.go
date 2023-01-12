@@ -48,20 +48,15 @@ func (wb *windowBase) start(ctx context.Context, output chan DU) {
 			case <-wb.closeNotify:
 				cancel()
 				return
-			case <-wb.trigger.OnReady():
-				wg := sync.WaitGroup{}
-				for _, i := range wb.GroupByKey(wb.data) {
-					wg.Add(1)
-					go func(data []DU) {
-						defer wg.Done()
-						if wb.evictor != nil {
-							wb.evictor.BeforeOperator(wb)
-							defer wb.evictor.AfterOperator(wb)
-						}
-						output <- wb.operator.Operate(data)
-					}(i)
-				}
-				wg.Wait()
+			case key := <-wb.trigger.OnReady():
+				data := wb.GroupByKey(wb.data)[key]
+				go func(data []DU) {
+					if wb.evictor != nil {
+						wb.evictor.BeforeOperator(wb)
+						defer wb.evictor.AfterOperator(wb)
+					}
+					output <- wb.operator.Operate(data)
+				}(data)
 			}
 		}
 	}()
@@ -74,11 +69,7 @@ func (wb *windowBase) stop() {
 func (wb *windowBase) GroupByKey(dataList []DU) map[string][]DU {
 	keyMap := make(map[string][]DU)
 	for _, data := range dataList {
-		if i, exists := keyMap[data.Key]; exists {
-			keyMap[data.Key] = append(i, data)
-		} else {
-			keyMap[data.Key] = []DU{data}
-		}
+		keyMap[data.Key] = append(keyMap[data.Key], data)
 	}
 	return keyMap
 }

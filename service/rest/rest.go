@@ -56,25 +56,7 @@ func (s *Service) recoveryMiddleware(c *gin.Context, err any) {
 	}
 }
 
-func (s *Service) Serve(port int) {
-	s.gin.Use(
-		gin.Logger(),
-		gin.CustomRecovery(s.recoveryMiddleware),
-		generateDB,
-	)
-	s.registerResource(s.gin.Group("windows"), s.windowHandler)
-	s.registerResource(s.gin.Group("trigger"), s.triggerHandler)
-	s.registerResource(s.gin.Group("evictor"), s.evictorHandler)
-	s.registerResource(s.gin.Group("operator"), s.operatorHandler)
-
-	s.registerProcessor(s.gin.Group("processor"), s.processorHandler)
-
-	if err := s.gin.Run(fmt.Sprintf(":%d", port)); err != nil {
-		panic(err)
-	}
-}
-
-func generateDB(c *gin.Context) {
+func (s *Service) generateDB(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c, 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(infra.MongoURI))
@@ -92,6 +74,24 @@ func generateDB(c *gin.Context) {
 	}
 	c.Set(infra.DataFlowDB, client.Database("dataflow"))
 	c.Next()
+}
+
+func (s *Service) Serve(port int) {
+	s.gin.Use(
+		gin.Logger(),
+		gin.CustomRecovery(s.recoveryMiddleware),
+		s.generateDB,
+	)
+	s.registerResource(s.gin.Group("windows"), s.windowHandler)
+	s.registerResource(s.gin.Group("trigger"), s.triggerHandler)
+	s.registerResource(s.gin.Group("evictor"), s.evictorHandler)
+	s.registerResource(s.gin.Group("operator"), s.operatorHandler)
+
+	s.registerProcessor(s.gin.Group("processor"), s.processorHandler)
+
+	if err := s.gin.Run(fmt.Sprintf(":%d", port)); err != nil {
+		panic(err)
+	}
 }
 
 func (s *Service) registerResource(group *gin.RouterGroup, handler resourceHandler) {
