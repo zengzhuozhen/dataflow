@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
@@ -16,9 +15,7 @@ type WindowRestHandler struct{}
 func (h *WindowRestHandler) GetById(ctx *gin.Context) {
 	var window *model.Window
 	id := ctx.Param("id")
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		window = repo.NewWindowRepo(ctx, database).GetWindowById(id)
-	})
+	window = repo.NewWindowRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).GetById(id)
 	ctx.JSON(http.StatusOK, window)
 }
 
@@ -27,24 +24,18 @@ func (h *WindowRestHandler) Create(ctx *gin.Context) {
 	var createdId string
 	_ = ctx.ShouldBind(&dto)
 	window := service.NewWindowFactory().CreateWindow(dto)
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		createdId = repo.NewWindowRepo(ctx, database).CreateWindow(infra.ToWindowModel(window))
-	})
+	createdId = repo.NewWindowRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).Create(infra.ToWindowModel(window))
 	ctx.JSON(http.StatusOK, gin.H{"id": createdId})
 }
 
 func (h *WindowRestHandler) Delete(ctx *gin.Context) {
 	id := ctx.Param("id")
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		repo.NewWindowRepo(ctx, database).DeleteWindow(id)
-	})
+	repo.NewWindowRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).Delete(id)
 	ctx.JSON(http.StatusOK, gin.H{})
 }
 
 func (h *WindowRestHandler) GetList(ctx *gin.Context) {
 	var windows []*model.Window
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		windows = repo.NewWindowRepo(ctx, database).GetAllWindows()
-	})
+	windows = repo.NewWindowRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).GetAll()
 	ctx.JSON(http.StatusOK, windows)
 }

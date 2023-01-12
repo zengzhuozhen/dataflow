@@ -2,11 +2,8 @@ package repo
 
 import (
 	"context"
-	"errors"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -26,47 +23,21 @@ func (t *Trigger) collectionName() string {
 	return "trigger"
 }
 
-func (t *Trigger) CreateTrigger(model *model.Trigger) string {
-	var (
-		err error
-		res *mongo.InsertOneResult
-	)
-	res, err = t.collection.InsertOne(t.ctx, model)
-	infra.PanicErr(err)
-	return res.InsertedID.(string)
+func (t *Trigger) Create(model *model.Trigger) string {
+	return Create(t.ctx, t.collection, model)
 }
 
-func (t *Trigger) DeleteTrigger(id string) {
-	res, err := t.collection.DeleteOne(t.ctx, bson.M{"_id": id})
-	infra.PanicErr(err)
-	if res.DeletedCount == 0 {
-		infra.PanicErr(errors.New(""), infra.DeleteEffectRowsZero)
-	}
-	infra.PanicErr(err)
+func (t *Trigger) Delete(id string) {
+	Delete(t.ctx, t.collection, id)
 }
 
-func (t *Trigger) GetTriggerById(id string) *model.Trigger {
+func (t *Trigger) GetById(id string) *model.Trigger {
 	triggerModel := new(model.Trigger)
-	objectId, err := primitive.ObjectIDFromHex(id)
-	infra.PanicErr(err)
-	err = t.collection.FindOne(t.ctx, bson.M{"_id": objectId}).Decode(&triggerModel)
-	if errors.Is(err, mongo.ErrNoDocuments) {
-		infra.PanicErr(err, infra.TriggerNotExists)
-	}
-	infra.PanicErr(err)
+	GetById(t.ctx, t.collection, id, triggerModel)
 	return triggerModel
 }
 
-func (t *Trigger) GetAllTriggers() (triggerList []*model.Trigger) {
-	cursor, err := t.collection.Find(t.ctx, bson.D{})
-	infra.PanicErr(err)
-	for cursor.Next(t.ctx) {
-		triggerModel := new(model.Trigger)
-		if err = cursor.Decode(&triggerModel); err != nil {
-			panic(err)
-		}
-		infra.PanicErr(err)
-		triggerList = append(triggerList, triggerModel)
-	}
+func (t *Trigger) GetAll() (triggerList []*model.Trigger) {
+	GetAll(t.ctx, t.collection, triggerList)
 	return
 }

@@ -2,11 +2,8 @@ package repo
 
 import (
 	"context"
-	"errors"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -26,43 +23,21 @@ func (o *Operator) collectionName() string {
 	return "operator"
 }
 
-func (o *Operator) CreateOperator(model *model.Operator) string {
-	var (
-		err error
-		res *mongo.InsertOneResult
-	)
-	res, err = o.collection.InsertOne(o.ctx, model)
-	infra.PanicErr(err)
-	return res.InsertedID.(string)
+func (o *Operator) Create(model *model.Operator) string {
+	return Create(o.ctx, o.collection, model)
 }
 
-func (o *Operator) DeleteOperator(id string) {
-	res, err := o.collection.DeleteOne(o.ctx, bson.M{"_id": id})
-	infra.PanicErr(err)
-	if res.DeletedCount == 0 {
-		infra.PanicErr(errors.New(""), infra.DeleteEffectRowsZero)
-	}
+func (o *Operator) Delete(id string) {
+	Delete(o.ctx, o.collection, id)
 }
 
-func (o *Operator) GetOperatorById(id string) *model.Operator {
+func (o *Operator) GetById(id string) *model.Operator {
 	operatorModel := new(model.Operator)
-	objectId, err := primitive.ObjectIDFromHex(id)
-	infra.PanicErr(err)
-	err = o.collection.FindOne(o.ctx, bson.M{"_id": objectId}).Decode(&operatorModel)
-	if errors.Is(err, mongo.ErrNoDocuments) {
-		infra.PanicErr(err, infra.OperatorNotExists)
-	}
-	infra.PanicErr(err, infra.DBError)
+	GetById(o.ctx, o.collection, id, operatorModel)
 	return operatorModel
 }
 
-func (o *Operator) GetAllOperator() (operatorList []*model.Operator) {
-	cursor, err := o.collection.Find(o.ctx, bson.D{})
-	infra.PanicErr(err)
-	for cursor.Next(o.ctx) {
-		operatorModel := new(model.Operator)
-		infra.PanicErr(cursor.Decode(&operatorModel))
-		operatorList = append(operatorList, operatorModel)
-	}
+func (o *Operator) GetAll() (operatorList []*model.Operator) {
+	GetAll(o.ctx, o.collection, operatorList)
 	return
 }

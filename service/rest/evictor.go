@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
@@ -16,9 +15,7 @@ type EvictorRestHandler struct{}
 func (h *EvictorRestHandler) GetById(ctx *gin.Context) {
 	var trigger *model.Evictor
 	id := ctx.Param("id")
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		trigger = repo.NewEvictorRepo(ctx, database).GetEvictorById(id)
-	})
+	trigger = repo.NewEvictorRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).GetById(id)
 	ctx.JSON(http.StatusOK, trigger)
 
 }
@@ -28,25 +25,19 @@ func (h *EvictorRestHandler) Create(ctx *gin.Context) {
 	var createdId string
 	_ = ctx.ShouldBind(&dto)
 	evictor := service.NewEvictorFactory().CreateEvictor(dto)
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		createdId = repo.NewEvictorRepo(ctx, database).CreateEvictor(infra.ToEvictorModel(evictor))
-	})
+	createdId = repo.NewEvictorRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).Create(infra.ToEvictorModel(evictor))
 	ctx.JSON(http.StatusOK, gin.H{"id": createdId})
 }
 
 func (h *EvictorRestHandler) Delete(ctx *gin.Context) {
 	id := ctx.Param("id")
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		repo.NewEvictorRepo(ctx, database).DeleteEvictor(id)
-	})
+	repo.NewEvictorRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).Delete(id)
 	ctx.JSON(http.StatusOK, gin.H{})
 
 }
 
 func (h *EvictorRestHandler) GetList(ctx *gin.Context) {
 	var evictors []*model.Evictor
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		evictors = repo.NewEvictorRepo(ctx, database).GetAllEvictor()
-	})
+	evictors = repo.NewEvictorRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).GetAll()
 	ctx.JSON(http.StatusOK, evictors)
 }

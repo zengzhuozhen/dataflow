@@ -1,11 +1,16 @@
 package rest
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zengzhuozhen/dataflow/infra"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"net/http"
+	"time"
 )
 
 type resourceHandler interface {
@@ -55,6 +60,7 @@ func (s *Service) Serve(port int) {
 	s.gin.Use(
 		gin.Logger(),
 		gin.CustomRecovery(s.recoveryMiddleware),
+		generateDB,
 	)
 	s.registerResource(s.gin.Group("windows"), s.windowHandler)
 	s.registerResource(s.gin.Group("trigger"), s.triggerHandler)
@@ -66,6 +72,26 @@ func (s *Service) Serve(port int) {
 	if err := s.gin.Run(fmt.Sprintf(":%d", port)); err != nil {
 		panic(err)
 	}
+}
+
+func generateDB(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c, 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(infra.MongoURI))
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err = client.Disconnect(ctx); err != nil {
+			panic(err)
+		}
+	}()
+	err = client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		panic(err)
+	}
+	c.Set(infra.DataFlowDB, client.Database("dataflow"))
+	c.Next()
 }
 
 func (s *Service) registerResource(group *gin.RouterGroup, handler resourceHandler) {

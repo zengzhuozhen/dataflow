@@ -10,10 +10,13 @@ import (
 	"time"
 )
 
-type processorFactory struct{}
+type processorFactory struct {
+	ctx context.Context
+	db  *mongo.Database
+}
 
-func NewProcessorFactory() *processorFactory {
-	return &processorFactory{}
+func NewProcessorFactory(ctx context.Context, db *mongo.Database) *processorFactory {
+	return &processorFactory{ctx: ctx, db: db}
 }
 
 func (f *processorFactory) CreateProcessor(windowID, triggerID, evictorID, operatorID string) *core.Processor {
@@ -23,12 +26,10 @@ func (f *processorFactory) CreateProcessor(windowID, triggerID, evictorID, opera
 		evictor  core.Evictor
 		operator core.Operator
 	)
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		window = infra.ToWindow(repo.NewWindowRepo(ctx, database).GetWindowById(windowID))
-		trigger = infra.ToTrigger(repo.NewTriggerRepo(ctx, database).GetTriggerById(triggerID))
-		evictor = infra.ToEvictor(repo.NewEvictorRepo(ctx, database).GetEvictorById(evictorID))
-		operator = infra.ToOperator(repo.NewOperatorRepo(ctx, database).GetOperatorById(operatorID))
-	})
+	window = infra.ToWindow(repo.NewWindowRepo(f.ctx, f.db).GetById(windowID))
+	trigger = infra.ToTrigger(repo.NewTriggerRepo(f.ctx, f.db).GetById(triggerID))
+	evictor = infra.ToEvictor(repo.NewEvictorRepo(f.ctx, f.db).GetById(evictorID))
+	operator = infra.ToOperator(repo.NewOperatorRepo(f.ctx, f.db).GetById(operatorID))
 
 	processor, _, _ := core.BuildProcessor().
 		Window(window).

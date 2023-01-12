@@ -3,7 +3,9 @@ package rest
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/zengzhuozhen/dataflow/core"
+	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/service"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"time"
 )
@@ -13,7 +15,8 @@ type ProcessorRestHandler struct{}
 func (h *ProcessorRestHandler) Create(ctx *gin.Context) {
 	var dto service.ProcessorCreateDTO
 	_ = ctx.ShouldBind(&dto)
-	processor := service.NewProcessorFactory().CreateProcessor(dto.WindowId, dto.TriggerId, dto.EvictorId, dto.OperatorId)
+	processor := service.NewProcessorFactory(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).
+		CreateProcessor(dto.WindowId, dto.TriggerId, dto.EvictorId, dto.OperatorId)
 	processor.Start()
 	service.GlobalResourcePool.Processor[processor.ID] = processor
 	ctx.JSON(http.StatusOK, gin.H{"id": processor.ID})

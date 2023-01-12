@@ -5,31 +5,40 @@ import (
 )
 
 type WindowsRepo interface {
-	CreateWindow(window *model.Window) string
-	DeleteWindow(id string)
-	GetWindowById(id string) *model.Window
-	GetAllWindows() (windowsList []*model.Window)
+	Create(window *model.Window) string
+	Delete(id string)
+	GetById(id string) *model.Window
+	GetAll() (windowsList []*model.Window)
 }
 
 type TriggerRepo interface {
-	CreateTrigger(trigger *model.Trigger) string
-	DeleteTrigger(id string)
-	GetTriggerById(id string) *model.Trigger
-	GetAllTriggers() (triggerList []*model.Trigger)
+	Create(trigger *model.Trigger) string
+	Delete(id string)
+	GetById(id string) *model.Trigger
+	GetAll() (triggerList []*model.Trigger)
 }
 
 type EvictorRepo interface {
-	CreateEvictor(evictor *model.Evictor) string
-	DeleteEvictor(id string)
-	GetEvictorById(id string) *model.Evictor
-	GetAllEvictor() []*model.Evictor
+	Create(evictor *model.Evictor) string
+	Delete(id string)
+	GetById(id string) *model.Evictor
+	GetAll() []*model.Evictor
 }
 
 type OperatorRepo interface {
-	CreateOperator(operator *model.Operator) string
-	DeleteOperator(id string)
-	GetOperatorById(id string) *model.Operator
-	GetAllOperator() []*model.Operator
+	Create(operator *model.Operator) string
+	Delete(id string)
+	GetById(id string) *model.Operator
+	GetAll() []*model.Operator
+}
+
+type CalTaskRepo interface {
+	Create(resource *model.CalTask) string
+	Delete(id string)
+	GetById(id string) *model.CalTask
+	GetAll() []*model.CalTask
 }
 
 var MongoURI string
+
+var DataFlowDB = "dataflow_db"

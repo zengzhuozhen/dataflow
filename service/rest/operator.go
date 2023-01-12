@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
@@ -16,9 +15,7 @@ type OperatorRestHandler struct{}
 func (h *OperatorRestHandler) GetById(ctx *gin.Context) {
 	var trigger *model.Operator
 	id := ctx.Param("id")
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		trigger = repo.NewOperatorRepo(ctx, database).GetOperatorById(id)
-	})
+	trigger = repo.NewOperatorRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).GetById(id)
 	ctx.JSON(http.StatusOK, trigger)
 }
 
@@ -27,24 +24,18 @@ func (h *OperatorRestHandler) Create(ctx *gin.Context) {
 	var createdId string
 	_ = ctx.ShouldBind(&dto)
 	operator := service.NewOperatorFactory().CreateOperator(dto)
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		createdId = repo.NewOperatorRepo(ctx, database).CreateOperator(infra.ToOperatorModel(operator))
-	})
+	createdId = repo.NewOperatorRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).Create(infra.ToOperatorModel(operator))
 	ctx.JSON(http.StatusOK, gin.H{"id": createdId})
 }
 
 func (h *OperatorRestHandler) Delete(ctx *gin.Context) {
 	id := ctx.Param("id")
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		repo.NewOperatorRepo(ctx, database).DeleteOperator(id)
-	})
+	repo.NewOperatorRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).Delete(id)
 	ctx.JSON(http.StatusOK, gin.H{})
 }
 
 func (h *OperatorRestHandler) GetList(ctx *gin.Context) {
 	var operator []*model.Operator
-	infra.WrapDB(func(ctx context.Context, database *mongo.Database) {
-		operator = repo.NewOperatorRepo(ctx, database).GetAllOperator()
-	})
+	operator = repo.NewOperatorRepo(ctx, ctx.Value(infra.DataFlowDB).(*mongo.Database)).GetAll()
 	ctx.JSON(http.StatusOK, operator)
 }
