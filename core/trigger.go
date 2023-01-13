@@ -28,8 +28,9 @@ func (c CounterTrigger) OnReady() <-chan string {
 
 func (c CounterTrigger) Clone() Trigger {
 	return CounterTrigger{
-		count:     c.count,
-		readyChan: make(chan string),
+		count:               c.count,
+		readyChan:           make(chan string),
+		lastTriggerCountMap: make(map[string]int),
 	}
 }
 
