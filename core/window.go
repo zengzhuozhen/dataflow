@@ -326,6 +326,7 @@ func (sw *SessionWindow) mergeWindow(windowIndex1, windowIndex2 int) *windowBase
 	window2 := sw.windows[windowIndex2]
 	window2.stop()
 
+	// reset window1 duration
 	window1.data = append(window1.data, window2.data...)
 	if window2.startTime.Before(window1.startTime) {
 		window1.startTime = window2.startTime
@@ -333,6 +334,7 @@ func (sw *SessionWindow) mergeWindow(windowIndex1, windowIndex2 int) *windowBase
 	if window2.endTime.After(window1.endTime) {
 		window1.endTime = window2.endTime
 	}
+	// remove window2
 	sw.windows = append(sw.windows[0:windowIndex2], sw.windows[windowIndex2:]...)
 
 	sort.Slice(sw.windows, func(i, j int) bool {
