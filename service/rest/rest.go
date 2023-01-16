@@ -105,5 +105,5 @@ func (s *Service) registerProcessor(group *gin.RouterGroup, handler *ProcessorRe
 	group.POST("", handler.Create)
 	group.DELETE(":id", handler.Delete)
 	group.PUT(":id/push", handler.PushData)
-	group.PUT("id/pop", handler.PopResult)
+	group.GET(":id/pop", handler.PopResult)
 }

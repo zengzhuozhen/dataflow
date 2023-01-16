@@ -49,7 +49,7 @@ var operatorCreateCmd = &cobra.Command{
 		infra.MakeHttpRequest("POST", "http://127.0.0.1:8080/operator",
 			func(body *bytes.Buffer) {
 				var createdDTO service.OperatorCreateDTO
-				createdDTO.Type = triggerType
+				createdDTO.Type = operatorType
 				createJson, _ := json.Marshal(createdDTO)
 				body.WriteString(string(createJson))
 			}, func(resp *http.Response) {

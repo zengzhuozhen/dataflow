@@ -48,7 +48,7 @@ var evictorCreateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		infra.MakeHttpRequest("POST", "http://127.0.0.1:8080/evictor", func(body *bytes.Buffer) {
 			var createdDTO service.EvictorCreateDTO
-			createdDTO.Type = triggerType
+			createdDTO.Type = evictorType
 			createJson, _ := json.Marshal(createdDTO)
 			body.WriteString(string(createJson))
 		}, func(resp *http.Response) {

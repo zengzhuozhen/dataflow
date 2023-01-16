@@ -92,7 +92,7 @@ var processorPopResultCmd = &cobra.Command{
 	Use:   "pop",
 	Short: "pop processor result",
 	Run: func(cmd *cobra.Command, args []string) {
-		infra.MakeHttpRequest("PUT", fmt.Sprintf("http://127.0.0.1:8080/processor/%s/pop", processorID),
+		infra.MakeHttpRequest("GET", fmt.Sprintf("http://127.0.0.1:8080/processor/%s/pop", processorID),
 			func(reader *bytes.Buffer) {},
 			func(resp *http.Response) {
 				type popeResp struct {
@@ -115,7 +115,10 @@ func init() {
 	processorCreateCmd.Flags().StringVarP(&windowID, "window", "w", "", "windowID(required)")
 	processorCreateCmd.Flags().StringVarP(&evitorID, "evitor", "e", "", "evitorID(required)")
 	processorCreateCmd.Flags().StringVarP(&operatorID, "operator", "o", "", "operatorID(required)")
-	processorCreateCmd.MarkFlagsRequiredTogether("trigger", "window", "evitor", "operator")
+	_ = processorCreateCmd.MarkFlagRequired("trigger")
+	_ = processorCreateCmd.MarkFlagRequired("window")
+	_ = processorCreateCmd.MarkFlagRequired("evitor")
+	_ = processorCreateCmd.MarkFlagRequired("operator")
 	// destroy option
 	processorDestroyCmd.Flags().StringVar(&processorID, "id", "", "processorID(required)")
 	_ = processorDestroyCmd.MarkFlagRequired("id")
@@ -124,7 +127,10 @@ func init() {
 	processorPushDataCmd.Flags().StringVarP(&dataKey, "key", "k", "", "key(required")
 	processorPushDataCmd.Flags().StringVarP(&dataValue, "value", "v", "", "value(required)")
 	processorPushDataCmd.Flags().StringVarP(&dataHappenTime, "happenTime", "t", "", "happenTime(required)")
-	processorPushDataCmd.MarkFlagsRequiredTogether("processor", "key", "value", "happenTime")
+	_ = processorPushDataCmd.MarkFlagRequired("processor")
+	_ = processorPushDataCmd.MarkFlagRequired("key")
+	_ = processorPushDataCmd.MarkFlagRequired("value")
+	_ = processorPushDataCmd.MarkFlagRequired("happenTime")
 	// pop result option
 	processorPopResultCmd.Flags().StringVarP(&processorID, "processor", "p", "", "processorID(required)")
 

@@ -6,7 +6,6 @@ import (
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -22,9 +21,7 @@ func Create[T model.Resource](ctx context.Context, collection *mongo.Collection,
 }
 
 func GetById[T model.Resource](ctx context.Context, collection *mongo.Collection, id string, res T) {
-	objectId, err := primitive.ObjectIDFromHex(id)
-	infra.PanicErr(err)
-	err = collection.FindOne(ctx, bson.M{"_id": objectId}).Decode(&res)
+	err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(&res)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		infra.PanicErr(err, resourceNotFoundErr(res))
 	}
