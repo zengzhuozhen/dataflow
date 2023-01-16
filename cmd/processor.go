@@ -88,22 +88,25 @@ var processorPushDataCmd = &cobra.Command{
 	},
 }
 
-var processorPopResultCmd = &cobra.Command{
-	Use:   "pop",
-	Short: "pop processor result",
+var processorGetResultCmd = &cobra.Command{
+	Use:   "result",
+	Short: "get processor result",
 	Run: func(cmd *cobra.Command, args []string) {
-		infra.MakeHttpRequest("GET", fmt.Sprintf("http://127.0.0.1:8080/processor/%s/pop", processorID),
+		infra.MakeHttpRequest("GET", fmt.Sprintf("http://127.0.0.1:8080/processor/%s/result", processorID),
 			func(reader *bytes.Buffer) {},
 			func(resp *http.Response) {
 				type popeResp struct {
-					key   string
-					value string
+					total string
+					data  struct {
+						key  string
+						data string
+					}
 				}
 				var respDTO popeResp
 				var respContent []byte
 				respContent, _ = ioutil.ReadAll(resp.Body)
 				json.Unmarshal(respContent, &respDTO)
-				fmt.Printf("计算结构:Key:%s,Value: %s \n", respDTO.key, respDTO.value)
+				fmt.Printf("计算结构:Key:%s,Value: %s \n", respDTO.data.key, respDTO.data.data)
 			},
 		)
 	},
@@ -132,7 +135,7 @@ func init() {
 	_ = processorPushDataCmd.MarkFlagRequired("value")
 	_ = processorPushDataCmd.MarkFlagRequired("happenTime")
 	// pop result option
-	processorPopResultCmd.Flags().StringVarP(&processorID, "processor", "p", "", "processorID(required)")
+	processorGetResultCmd.Flags().StringVarP(&processorID, "processor", "p", "", "processorID(required)")
 
-	processorCmd.AddCommand(processorCreateCmd, processorDestroyCmd, processorPushDataCmd, processorPopResultCmd)
+	processorCmd.AddCommand(processorCreateCmd, processorDestroyCmd, processorPushDataCmd, processorGetResultCmd)
 }

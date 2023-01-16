@@ -2,7 +2,6 @@ package core
 
 import (
 	"context"
-	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -89,9 +88,6 @@ func (p *Processor) PushData(Data DU) {
 	p.input <- Data
 }
 
-func (p *Processor) PopResult() {
-	for {
-		data := <-p.output
-		fmt.Println(data)
-	}
+func (p *Processor) PopResult(fn CalResultHandle) {
+	fn(p.output)
 }

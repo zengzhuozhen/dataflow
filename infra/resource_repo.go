@@ -34,8 +34,8 @@ type OperatorRepo interface {
 
 type CalTaskRepo interface {
 	Create(resource *model.CalTask) string
-	Delete(id string)
-	GetById(id string) *model.CalTask
+	GetByProcessorId(id string) []*model.CalTask
+	DeleteByProcessorId(id string)
 	GetAll() []*model.CalTask
 }
 

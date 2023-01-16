@@ -62,6 +62,8 @@ func resourceNotFoundErr(resource any) int64 {
 		return infra.TriggerNotExists
 	case model.Operator, *model.Operator:
 		return infra.OperatorNotExists
+	case model.CalTask, *model.CalTask:
+		return infra.CalTaskNotFound
 	}
 	return 0
 }

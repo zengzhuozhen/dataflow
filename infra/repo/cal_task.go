@@ -2,8 +2,10 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"github.com/zengzhuozhen/dataflow/infra"
 	"github.com/zengzhuozhen/dataflow/infra/model"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -27,14 +29,29 @@ func (o *CalTask) Create(model *model.CalTask) string {
 	return Create(o.ctx, o.collection, model)
 }
 
-func (o *CalTask) GetById(id string) *model.CalTask {
-	calTask := new(model.CalTask)
-	GetById(o.ctx, o.collection, id, calTask)
-	return calTask
+func (o *CalTask) GetByProcessorId(id string) []*model.CalTask {
+	var resources []*model.CalTask
+	cursor, err := o.collection.Find(o.ctx, bson.M{"processor_id": id})
+	infra.PanicErr(err)
+	for cursor.Next(o.ctx) {
+		var resource *model.CalTask
+		if err = cursor.Decode(&resource); err != nil {
+			panic(err)
+		}
+		infra.PanicErr(err)
+		resources = append(resources, resource)
+	}
+	return resources
 }
 
-func (o *CalTask) Delete(id string) {
-	Delete(o.ctx, o.collection, id)
+func (o *CalTask) DeleteByProcessorId(id string) {
+	res, err := o.collection.DeleteOne(o.ctx, bson.M{"processor_id": id})
+	if res.DeletedCount == 0 {
+		infra.PanicErr(errors.New(""), infra.DeleteEffectRowsZero)
+	}
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (o *CalTask) GetAll() []*model.CalTask {

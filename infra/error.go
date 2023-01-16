@@ -16,6 +16,7 @@ const (
 	TriggerNotExists     = 10001002
 	OperatorNotExists    = 10001003
 	EvictorNotExists     = 10001004
+	CalTaskNotFound      = 10001005
 )
 
 var errText = map[int64]string{
@@ -29,6 +30,7 @@ var errText = map[int64]string{
 	TriggerNotExists:     "触发器资源不存在",
 	OperatorNotExists:    "执行器资源不存在",
 	EvictorNotExists:     "剔除器资源不存在",
+	CalTaskNotFound:      "找不到计算结果",
 }
 
 var EmptyDetail = make(map[string]any)
