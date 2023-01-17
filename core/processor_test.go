@@ -21,6 +21,7 @@ func TestBuildProcessor_Classic_Batch(t *testing.T) {
 	if sum.Value != 6 {
 		t.Errorf("sum want to be %d, got %v", 6, sum.Value)
 	}
+	clearGlobalWindow()
 }
 
 func TestBuildProcessor_Classic_Batch_Accumulate(t *testing.T) {
@@ -47,7 +48,7 @@ func TestBuildProcessor_Classic_Batch_Accumulate(t *testing.T) {
 		}
 	}()
 	time.Sleep(time.Second)
-
+	clearGlobalWindow()
 }
 
 func TestBuildProcessor_Classic_Batch_Recalculate(t *testing.T) {
@@ -59,9 +60,9 @@ func TestBuildProcessor_Classic_Batch_Recalculate(t *testing.T) {
 		Build()
 
 	processor.Start()
-	input <- DU{Key: "zzz", Value: 1, EventTime: time.Now()}
-	input <- DU{Key: "zzz", Value: 2, EventTime: time.Now()}
-	input <- DU{Key: "zzz", Value: 3, EventTime: time.Now()}
+	input <- DU{Key: "zzz1", Value: 1, EventTime: time.Now()}
+	input <- DU{Key: "zzz1", Value: 2, EventTime: time.Now()}
+	input <- DU{Key: "zzz1", Value: 3, EventTime: time.Now()}
 
 	sum := <-output
 	if sum.Value != 6 {
@@ -76,6 +77,7 @@ func TestBuildProcessor_Classic_Batch_Recalculate(t *testing.T) {
 	if sum.Value != 15 {
 		t.Errorf("sum want to be %d, got %v", 15, sum.Value)
 	}
+	clearGlobalWindow()
 }
 
 func TestBuildProcessor_Fixed_Windows_Batch(t *testing.T) {
@@ -106,6 +108,7 @@ func TestBuildProcessor_Fixed_Windows_Batch(t *testing.T) {
 	if sum.Key == "zzz" && sum.Value != 3 || sum.Key == "zzz1" && sum.Value != 7 || sum.Key == "zzz2" && sum.Value != 11 {
 		t.Errorf("sum.Key:%s,sum.Value:%d", sum.Key, sum.Value)
 	}
+	clearGlobalWindow()
 }
 
 func TestBuildProcessor_Fixed_Windows_Timer_Trigger_Flow(t *testing.T) {
@@ -149,6 +152,7 @@ func TestBuildProcessor_Fixed_Windows_Timer_Trigger_Flow(t *testing.T) {
 	if sum.Key == "zzz" && sum.Value != 3 || sum.Key == "zzz1" && sum.Value != 7 || sum.Key == "zzz2" && sum.Value != 11 {
 		t.Errorf("sum.Key:%s,sum.Value:%d", sum.Key, sum.Value)
 	}
+	clearGlobalWindow()
 }
 
 func TestBuildProcessor_Slide_Windows_Count_Trigger(t *testing.T) {
@@ -170,6 +174,7 @@ func TestBuildProcessor_Slide_Windows_Count_Trigger(t *testing.T) {
 	if sum.Key != "zzz" || sum.Value != 1 {
 		t.Errorf("sum.Key:%s,sum.Value:%d", sum.Key, sum.Value)
 	}
+	clearGlobalWindow()
 }
 
 func TestBuildProcessor_Slide_Windows_Timer_Trigger(t *testing.T) {
@@ -188,6 +193,7 @@ func TestBuildProcessor_Slide_Windows_Timer_Trigger(t *testing.T) {
 	<-output
 	<-output
 	<-output
+	clearGlobalWindow()
 }
 
 func TestBuildProcessor_Session_Windows_Counter_Trigger(t *testing.T) {
@@ -206,6 +212,7 @@ func TestBuildProcessor_Session_Windows_Counter_Trigger(t *testing.T) {
 	if sum.Key != "zzz" || sum.Value != 6 {
 		t.Errorf("sum.Key:%s,sum.Value:%d", sum.Key, sum.Value)
 	}
+	clearGlobalWindow()
 }
 
 func TestBuildProcessor_Session_Windows_Auto_Merge(t *testing.T) {
@@ -228,9 +235,14 @@ func TestBuildProcessor_Session_Windows_Auto_Merge(t *testing.T) {
 	if sum.Key != "zzz" || sum.Value != 6 {
 		t.Errorf("sum.Key:%s,sum.Value:%d", sum.Key, sum.Value)
 	}
+	clearGlobalWindow()
 }
 
 func helperParseTimeNoError(timeValue string) time.Time {
 	t, _ := time.Parse("2006-01-02 15:04:05", timeValue)
 	return t
+}
+
+func clearGlobalWindow() {
+	defaultGlobalWindow = newGlobalWindow()
 }
