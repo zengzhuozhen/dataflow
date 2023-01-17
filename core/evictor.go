@@ -6,31 +6,39 @@ const (
 )
 
 type Evictor interface {
-	BeforeOperator(window *windowBase)
-	AfterOperator(window *windowBase)
+	// BeforeOperator method called before operator run
+	BeforeOperator(window *windowBase, key string)
+	// AfterOperator method called after operator run
+	AfterOperator(window *windowBase, key string)
 	Clone() Evictor
 }
 
 type AccumulateEvictor struct{}
 
-func (e AccumulateEvictor) BeforeOperator(windows *windowBase) {}
+func (e AccumulateEvictor) BeforeOperator(windows *windowBase, key string) {}
 
-func (e AccumulateEvictor) AfterOperator(windows *windowBase) {}
+func (e AccumulateEvictor) AfterOperator(windows *windowBase, key string) {}
 
 func (e AccumulateEvictor) Clone() Evictor {
 	return AccumulateEvictor{}
 }
 
-type RecalculateEvictor struct {
-	ID string
-}
+type RecalculateEvictor struct{}
 
-func (e RecalculateEvictor) BeforeOperator(windows *windowBase) {}
+func (e RecalculateEvictor) BeforeOperator(windows *windowBase, key string) {}
 
-func (e RecalculateEvictor) AfterOperator(windows *windowBase) {
+func (e RecalculateEvictor) AfterOperator(windows *windowBase, key string) {
 	windows.mutex.Lock()
 	defer windows.mutex.Unlock()
-	windows.data = []DU{}
+	var filteredData []DU
+	for k, data := range windows.GroupByKey(windows.data) {
+		if k != key {
+			filteredData = append(filteredData, data...)
+		}
+	}
+	// the orders of windows Data is no guarantee
+	windows.data = filteredData
+	windows.trigger.Reset(key)
 }
 
 func (e RecalculateEvictor) Clone() Evictor {

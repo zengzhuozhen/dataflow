@@ -50,13 +50,13 @@ func (wb *windowBase) start(ctx context.Context, output chan DU) {
 				return
 			case key := <-wb.trigger.OnReady():
 				data := wb.GroupByKey(wb.data)[key]
-				go func(data []DU) {
+				go func(key string, data []DU) {
 					if wb.evictor != nil {
-						wb.evictor.BeforeOperator(wb)
-						defer wb.evictor.AfterOperator(wb)
+						wb.evictor.BeforeOperator(wb, key)
+						defer wb.evictor.AfterOperator(wb, key)
 					}
 					output <- wb.operator.Operate(data)
-				}(data)
+				}(key, data)
 			}
 		}
 	}()

@@ -21,6 +21,7 @@ type Added interface {
 }
 
 type Operator interface {
+	// Operate indicate how to calculate window data
 	Operate(DUs []DU) DU
 	Clone() Operator
 	GetDataType() int32

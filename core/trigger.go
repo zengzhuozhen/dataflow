@@ -14,6 +14,7 @@ type Trigger interface {
 	OnReady() <-chan string
 	Clone() Trigger
 	Run(ctx context.Context, windowBase *windowBase)
+	Reset(key string)
 }
 
 type CounterTrigger struct {
@@ -46,9 +47,14 @@ func (c CounterTrigger) Run(ctx context.Context, windowBase *windowBase) {
 					c.lastTriggerCountMap[key] = len(data)
 					c.readyChan <- key
 				}
+				time.Sleep(time.Second / 20)
 			}
 		}
 	}
+}
+
+func (c CounterTrigger) Reset(key string) {
+	c.lastTriggerCountMap[key] = 0
 }
 
 func (c CounterTrigger) GetParams() int {
@@ -91,6 +97,10 @@ func (t TimeTrigger) Run(ctx context.Context, windowBase *windowBase) {
 
 func (t TimeTrigger) GetParams() time.Duration {
 	return t.period
+}
+
+func (t TimeTrigger) Reset(string) {
+	t.tick.Reset(t.period)
 }
 
 func NewTimerTrigger(period time.Duration) Trigger {
