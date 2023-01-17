@@ -38,45 +38,31 @@ func (s SumOperator) Operate(DUs []DU) DU {
 	var key string
 
 	switch s.DataType {
-	case OperatorDataTypeInt:
-		adder, sum := Adder(0)
-		for _, data := range DUs {
-			key = data.Key
-			adder(data.Value)
-		}
-		return DU{
-			Key:       key,
-			Value:     sum(),
-			EventTime: time.Now(),
-		}
 	case OperatorDataTypeFloat:
-		adder, sum := Adder(float64(0))
-		for _, data := range DUs {
-			key = data.Key
-			adder(data.Value)
-		}
-		return DU{
-			Key:       key,
-			Value:     sum(),
-			EventTime: time.Now(),
-		}
+		return cal(DUs, key, float64(0))
+	case OperatorDataTypeString:
+		return cal(DUs, key, "")
 	default:
-		adder, sum := Adder("")
-		for _, data := range DUs {
-			key = data.Key
-			adder(data.Value)
-		}
-		return DU{
-			Key:       key,
-			Value:     sum(),
-			EventTime: time.Now(),
-		}
+		return cal(DUs, key, 0)
 	}
 }
 
 func (s SumOperator) Clone() Operator {
 	return SumOperator{
 		DataType: s.DataType,
+	}
+}
+
+func cal[T Added](DUs []DU, key string, zeroValue T) DU {
+	adder, sum := Adder(zeroValue)
+	for _, data := range DUs {
+		key = data.Key
+		adder(data.Value)
+	}
+	return DU{
+		Key:       key,
+		Value:     sum(),
+		EventTime: time.Now(),
 	}
 }
 
