@@ -73,7 +73,9 @@ func (f *operatorFactory) CreateOperator(dto OperatorCreateDTO) core.Operator {
 	f.passCreateRule(dto)
 	switch dto.Type {
 	case core.OperatorTypeSum:
-		return core.SumOperator{}
+		return core.SumOperator{
+			DataType: dto.DataType,
+		}
 	}
 	return nil
 }
@@ -81,6 +83,9 @@ func (f *operatorFactory) CreateOperator(dto OperatorCreateDTO) core.Operator {
 func (f *operatorFactory) passCreateRule(dto OperatorCreateDTO) {
 	if dto.Type != core.OperatorTypeSum {
 		panic("error operator type")
+	}
+	if dto.DataType < core.OperatorDataTypeInt || dto.DataType > core.OperatorDataTypeString {
+		panic("error operator data type")
 	}
 }
 

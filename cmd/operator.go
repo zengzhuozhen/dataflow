@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	operatorType int32
+	operatorType     int32
+	operatorDataType int32
 )
 
 var operatorCmd = &cobra.Command{
@@ -50,6 +51,7 @@ var operatorCreateCmd = &cobra.Command{
 			func(body *bytes.Buffer) {
 				var createdDTO service.OperatorCreateDTO
 				createdDTO.Type = operatorType
+				createdDTO.DataType = operatorDataType
 				createJson, _ := json.Marshal(createdDTO)
 				body.WriteString(string(createJson))
 			}, func(resp *http.Response) {
@@ -95,6 +97,7 @@ var operatorDestroyCmd = &cobra.Command{
 
 func init() {
 	operatorCreateCmd.Flags().Int32VarP(&operatorType, "type", "t", 0, "operator type (1:SumOperator)")
+	operatorCreateCmd.Flags().Int32VarP(&operatorDataType, "dataType", "d", 0, "operator data type (0:int,1:float,2:string)")
 	_ = operatorCreateCmd.MarkFlagRequired("type")
 	operatorDestroyCmd.Flags().StringVar(&operatorID, "id", "", "operatorID(required)")
 	_ = operatorDestroyCmd.MarkFlagRequired("id")

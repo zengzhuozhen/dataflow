@@ -107,8 +107,9 @@ func ToOperatorModel(operator core.Operator) *model.Operator {
 	switch operator.(type) {
 	case core.SumOperator:
 		return &model.Operator{
-			Id:   uuid.New().String(),
-			Type: core.OperatorTypeSum,
+			Id:       uuid.New().String(),
+			Type:     core.OperatorTypeSum,
+			DataType: operator.GetDataType(),
 		}
 	}
 	return nil

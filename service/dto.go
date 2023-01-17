@@ -20,7 +20,8 @@ type EvictorCreateDTO struct {
 }
 
 type OperatorCreateDTO struct {
-	Type int32
+	Type     int32
+	DataType int32
 }
 
 type ProcessorCreateDTO struct {
