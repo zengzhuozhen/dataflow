@@ -94,10 +94,12 @@ func findStartAndEndTime(eventTime time.Time, size, passPeriod time.Duration) (s
 	return baseTime.Add(passPeriod), baseTime.Add(passPeriod).Add(size)
 }
 
-var defaultGlobalWindow = newGlobalWindow()
+func (gw *GlobalWindow) GetWindows() []*windowBase {
+	return []*windowBase{gw.windowBase}
+}
 
-func newGlobalWindow() GlobalWindow {
-	return GlobalWindow{
+func NewDefaultGlobalWindow() Windows {
+	return &GlobalWindow{
 		windowBase: &windowBase{
 			data:      []DU{},
 			startTime: time.Time{},
@@ -106,14 +108,6 @@ func newGlobalWindow() GlobalWindow {
 		},
 		Once: new(sync.Once),
 	}
-}
-
-func (gw *GlobalWindow) GetWindows() []*windowBase {
-	return []*windowBase{gw.windowBase}
-}
-
-func NewDefaultGlobalWindow() Windows {
-	return &defaultGlobalWindow
 }
 
 type GlobalWindow struct {

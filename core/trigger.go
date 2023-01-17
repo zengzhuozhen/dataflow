@@ -47,7 +47,7 @@ func (c CounterTrigger) Run(ctx context.Context, windowBase *windowBase) {
 					c.lastTriggerCountMap[key] = len(data)
 					c.readyChan <- key
 				}
-				time.Sleep(time.Second / 20)
+				time.Sleep(time.Second / 20) // data-check period
 			}
 		}
 	}

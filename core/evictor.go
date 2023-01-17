@@ -10,9 +10,11 @@ type Evictor interface {
 	BeforeOperator(window *windowBase, key string)
 	// AfterOperator method called after operator run
 	AfterOperator(window *windowBase, key string)
+	// Clone clone
 	Clone() Evictor
 }
 
+// AccumulateEvictor nothing to do
 type AccumulateEvictor struct{}
 
 func (e AccumulateEvictor) BeforeOperator(windows *windowBase, key string) {}
@@ -23,6 +25,7 @@ func (e AccumulateEvictor) Clone() Evictor {
 	return AccumulateEvictor{}
 }
 
+// RecalculateEvictor remove the old data after operate for next calculate
 type RecalculateEvictor struct{}
 
 func (e RecalculateEvictor) BeforeOperator(windows *windowBase, key string) {}
