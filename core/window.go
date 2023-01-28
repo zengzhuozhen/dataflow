@@ -119,7 +119,7 @@ func (gw *GlobalWindow) AssignWindow(data DU) []*windowBase {
 	window := gw.windowBase
 	gw.appendData(data)
 	gw.Once.Do(func() {
-		// first enter should re-create window with trigger,operator and evitor
+		// first coming data should re-create window with trigger,operator and evitor
 		window = nil
 	})
 	if window == nil {
