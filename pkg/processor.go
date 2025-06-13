@@ -1,7 +1,9 @@
-package core
+package pkg
 
 import (
 	"context"
+	"sync"
+
 	"github.com/google/uuid"
 )
 
@@ -15,6 +17,7 @@ type Processor struct {
 	evictor  Evictor
 	input    chan DU
 	output   chan DU
+	wg       sync.WaitGroup
 }
 
 func BuildProcessor() *Processor {
@@ -27,7 +30,8 @@ func (p *Processor) Start() {
 		for {
 			select {
 			case <-p.ctx.Done():
-				close(p.input)
+				// close(p.input)
+				p.wg.Wait()
 				close(p.output)
 				return
 			case data := <-p.input:
@@ -36,7 +40,8 @@ func (p *Processor) Start() {
 					// can't found suitable window, create window and re-assign
 					windows = p.windows.CreateWindow(data, p.trigger, p.operator, p.evictor)
 					for _, window := range windows {
-						window.start(p.ctx, p.output)
+						p.wg.Add(1)
+						window.startWithWG(p.ctx, p.output, &p.wg)
 					}
 					p.windows.AssignWindow(data)
 				}
@@ -46,6 +51,12 @@ func (p *Processor) Start() {
 }
 
 func (p *Processor) Stop() {
+	// 主动 stop 所有窗口，确保 goroutine 能收到退出信号
+	if p.windows != nil {
+		for _, w := range p.windows.GetWindows() {
+			w.stop()
+		}
+	}
 	p.cancel()
 }
 
@@ -84,10 +95,11 @@ func (p *Processor) Build() (*Processor, chan<- DU, <-chan DU) {
 	return p, p.input, p.output
 }
 
-func (p *Processor) PushData(Data DU) {
-	p.input <- Data
+// Node接口实现
+func (p *Processor) In() chan<- DU {
+	return p.input
 }
 
-func (p *Processor) PopResult(fn CalResultHandle) {
-	fn(p.output)
+func (p *Processor) Out() <-chan DU {
+	return p.output
 }

@@ -1,4 +1,4 @@
-package core
+package pkg
 
 import (
 	"context"
@@ -34,32 +34,7 @@ type windowBase struct {
 	operator    Operator
 	evictor     Evictor
 	closeNotify chan struct{}
-}
-
-func (wb *windowBase) start(ctx context.Context, output chan DU) {
-	childCtx, cancel := context.WithCancel(ctx)
-	go wb.trigger.Run(childCtx, wb)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				cancel()
-				return
-			case <-wb.closeNotify:
-				cancel()
-				return
-			case key := <-wb.trigger.OnReady():
-				data := wb.GroupByKey(wb.data)[key]
-				go func(key string, data []DU) {
-					if wb.evictor != nil {
-						wb.evictor.BeforeOperator(wb, key)
-						defer wb.evictor.AfterOperator(wb, key)
-					}
-					output <- wb.operator.Operate(data)
-				}(key, data)
-			}
-		}
-	}()
+	notifyChan  chan struct{}
 }
 
 func (wb *windowBase) stop() {
@@ -77,6 +52,7 @@ func (wb *windowBase) GroupByKey(dataList []DU) map[string][]DU {
 func (wb *windowBase) appendData(data DU) {
 	wb.mutex.Lock()
 	wb.data = append(wb.data, data)
+	wb.notifyChan <- struct{}{}
 	wb.mutex.Unlock()
 }
 
@@ -130,13 +106,15 @@ func (gw *GlobalWindow) AssignWindow(data DU) []*windowBase {
 
 func (gw *GlobalWindow) CreateWindow(data DU, trigger Trigger, operator Operator, evictor Evictor) []*windowBase {
 	gw.windowBase = &windowBase{
-		data:      []DU{},
-		startTime: time.Time{},
-		endTime:   time.Time{},
-		mutex:     new(sync.Mutex),
-		trigger:   trigger.Clone(),
-		operator:  operator.Clone(),
-		evictor:   evictor.Clone(),
+		data:        []DU{},
+		startTime:   time.Time{},
+		endTime:     time.Time{},
+		mutex:       new(sync.Mutex),
+		trigger:     trigger.Clone(),
+		operator:    operator.Clone(),
+		evictor:     evictor.Clone(),
+		closeNotify: make(chan struct{}),
+		notifyChan:  make(chan struct{}, 1),
 	}
 	return []*windowBase{gw.windowBase}
 }
@@ -174,6 +152,7 @@ func (fw *FixedWindow) CreateWindow(data DU, trigger Trigger, operator Operator,
 		operator:    operator.Clone(),
 		evictor:     evictor.Clone(),
 		closeNotify: make(chan struct{}),
+		notifyChan:  make(chan struct{}, 1),
 	}
 	window.startTime, window.endTime = findStartAndEndTime(data.EventTime, fw.size, 0)
 	fw.windows = append(fw.windows, window)
@@ -223,6 +202,7 @@ func (sw *SlideWindow) CreateWindow(data DU, trigger Trigger, operator Operator,
 			operator:    operator.Clone(),
 			evictor:     evictor.Clone(),
 			closeNotify: make(chan struct{}),
+			notifyChan:  make(chan struct{}, 1),
 		}
 		window.startTime, window.endTime = findStartAndEndTime(data.EventTime, sw.size, needPassPeriod)
 		sw.windows = append(sw.windows, window)
@@ -306,6 +286,7 @@ func (sw *SessionWindow) CreateWindow(data DU, trigger Trigger, operator Operato
 		operator:    operator.Clone(),
 		evictor:     evictor.Clone(),
 		closeNotify: make(chan struct{}),
+		notifyChan:  make(chan struct{}, 1),
 	}
 	window.startTime, window.endTime = findStartAndEndTime(data.EventTime, sw.gap, 0)
 	sw.windows = append(sw.windows, window)
@@ -339,4 +320,36 @@ func (sw *SessionWindow) mergeWindow(windowIndex1, windowIndex2 int) *windowBase
 		return sw.windows[i].startTime.Before(sw.windows[j].startTime)
 	})
 	return window1
+}
+
+func (wb *windowBase) startWithWG(ctx context.Context, output chan DU, wg *sync.WaitGroup) {
+	childCtx, cancel := context.WithCancel(ctx)
+	go wb.trigger.Run(childCtx, wb)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				cancel()
+				return
+			case <-wb.closeNotify:
+				cancel()
+				return
+			case key := <-wb.trigger.OnReady():
+				data := wb.GroupByKey(wb.data)[key]
+				go func(key string, data []DU) {
+					if wb.evictor != nil {
+						wb.evictor.BeforeOperator(wb, key)
+						defer wb.evictor.AfterOperator(wb, key)
+					}
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						output <- wb.operator.Operate(data)
+					}
+				}(key, data)
+			}
+		}
+	}()
 }

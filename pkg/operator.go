@@ -1,4 +1,4 @@
-package core
+package pkg
 
 import (
 	"time"
@@ -46,6 +46,7 @@ func (s SumOperator) Operate(DUs []DU) DU {
 	default:
 		return cal(DUs, key, 0)
 	}
+	
 }
 
 func (s SumOperator) Clone() Operator {

@@ -1,7 +1,8 @@
-package core
+package pkg
 
 import (
 	"context"
+	"sync"
 	"time"
 )
 
@@ -20,49 +21,49 @@ type Trigger interface {
 type CounterTrigger struct {
 	count               int
 	readyChan           chan string
-	lastTriggerCountMap map[string]int
+	lastTriggerCountMap sync.Map
 }
 
-func (c CounterTrigger) OnReady() <-chan string {
+func (c *CounterTrigger) OnReady() <-chan string {
 	return c.readyChan
 }
 
-func (c CounterTrigger) Clone() Trigger {
-	return CounterTrigger{
-		count:               c.count,
-		readyChan:           make(chan string),
-		lastTriggerCountMap: make(map[string]int),
+func (c *CounterTrigger) Clone() Trigger {
+	return &CounterTrigger{
+		count:     c.count,
+		readyChan: make(chan string),
 	}
 }
 
-func (c CounterTrigger) Run(ctx context.Context, windowBase *windowBase) {
+func (c *CounterTrigger) Run(ctx context.Context, windowBase *windowBase) {
+	defer close(c.readyChan)
 	for {
 		select {
 		case <-ctx.Done():
-			close(c.readyChan)
 			return
-		default:
+		case <-windowBase.notifyChan:
 			for key, data := range windowBase.GroupByKey(windowBase.data) {
-				if len(data) >= c.count && len(data) != c.lastTriggerCountMap[key] {
-					c.lastTriggerCountMap[key] = len(data)
+				val, _ := c.lastTriggerCountMap.LoadOrStore(key, 0)
+				lastCount := val.(int)
+				if len(data) >= c.count && len(data) != lastCount {
+					c.lastTriggerCountMap.Store(key, len(data))
 					c.readyChan <- key
 				}
-				time.Sleep(time.Second / 20) // data-check period
 			}
 		}
 	}
 }
 
-func (c CounterTrigger) Reset(key string) {
-	c.lastTriggerCountMap[key] = 0
+func (c *CounterTrigger) Reset(key string) {
+	c.lastTriggerCountMap.Store(key, 0)
 }
 
-func (c CounterTrigger) GetParams() int {
+func (c *CounterTrigger) GetParams() int {
 	return c.count
 }
 
 func NewCounterTrigger(count int) Trigger {
-	return CounterTrigger{count: count, readyChan: make(chan string), lastTriggerCountMap: make(map[string]int)}
+	return &CounterTrigger{count: count, readyChan: make(chan string)}
 }
 
 type TimeTrigger struct {
@@ -84,10 +85,10 @@ func (t TimeTrigger) Clone() Trigger {
 }
 
 func (t TimeTrigger) Run(ctx context.Context, windowBase *windowBase) {
+	defer close(t.readyChan)
 	for {
 		select {
 		case <-ctx.Done():
-			close(t.readyChan)
 			return
 		case <-t.tick.C:
 			t.readyChan <- ""

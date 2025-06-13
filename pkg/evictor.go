@@ -1,4 +1,4 @@
-package core
+package pkg
 
 const (
 	EvictorTypeAccumulate  = 1
