@@ -30,19 +30,19 @@ func (p *Processor) Start() {
 		for {
 			select {
 			case <-p.ctx.Done():
-				// close(p.input)
 				p.wg.Wait()
 				close(p.output)
 				return
 			case data := <-p.input:
 				windows := p.windows.AssignWindow(data)
 				if len(windows) == 0 {
-					// can't found suitable window, create window and re-assign
+					// can't found suitable window, create window first
 					windows = p.windows.CreateWindow(data, p.trigger, p.operator, p.evictor)
 					for _, window := range windows {
 						p.wg.Add(1)
 						window.startWithWG(p.ctx, p.output, &p.wg)
 					}
+					// now trigger is running, safe to assign data
 					p.windows.AssignWindow(data)
 				}
 			}

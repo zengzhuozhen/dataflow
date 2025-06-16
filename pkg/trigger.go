@@ -90,6 +90,8 @@ func (t TimeTrigger) Run(ctx context.Context, windowBase *windowBase) {
 		select {
 		case <-ctx.Done():
 			return
+		case <-windowBase.notifyChan:
+			continue
 		case <-t.tick.C:
 			t.readyChan <- ""
 		}

@@ -93,7 +93,6 @@ type GlobalWindow struct {
 
 func (gw *GlobalWindow) AssignWindow(data DU) []*windowBase {
 	window := gw.windowBase
-	gw.appendData(data)
 	gw.Once.Do(func() {
 		// first coming data should re-create window with trigger,operator and evitor
 		window = nil
@@ -101,6 +100,7 @@ func (gw *GlobalWindow) AssignWindow(data DU) []*windowBase {
 	if window == nil {
 		return []*windowBase{}
 	}
+	gw.appendData(data)
 	return []*windowBase{window}
 }
 
