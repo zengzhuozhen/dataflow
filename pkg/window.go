@@ -52,8 +52,8 @@ func (wb *windowBase) GroupByKey(dataList []DU) map[string][]DU {
 func (wb *windowBase) appendData(data DU) {
 	wb.mutex.Lock()
 	wb.data = append(wb.data, data)
-	wb.notifyChan <- struct{}{}
 	wb.mutex.Unlock()
+	wb.notifyChan <- struct{}{}
 }
 
 func findStartAndEndTime(eventTime time.Time, size, passPeriod time.Duration) (start, end time.Time) {
